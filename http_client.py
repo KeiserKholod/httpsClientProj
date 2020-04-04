@@ -74,7 +74,8 @@ def prepare_request(data):
         line += 'Host: ' + data.domain + '\r\n'
         line += 'Content-Type: application/x-www-form-urlencoded\r\n'
         line += 'Connection: close\r\n'
-        line += 'Content-Length: ' + str(len(data.data_to_send)) + '\r\n\r\n' + data.data_to_send
+        line += 'Content-Length: ' + str(len(data.data_to_send)) + \
+                '\r\n\r\n' + data.data_to_send
     return line
 
 
