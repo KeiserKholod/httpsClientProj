@@ -46,8 +46,8 @@ def write_help():
     line += "\t-r or --req <text> to send this request\n"
     # line += "\t-p or --path <absolute path> to PUT or PATCH data from file\n"
     line += "\t-d or --data <text> to PUT, POST or PATCH data\n"
-    line += "\t-n or --response <absolute path> " \
-            "to write server response in file\n"
+    # line += "\t-n or --response <absolute path> " \
+    #        "to write server response in file\n"
     # line += "\t-u or --user-agent <text> to write user-agent manually\n"
     print(line)
 
