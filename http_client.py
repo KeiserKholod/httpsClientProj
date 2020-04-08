@@ -18,6 +18,7 @@ class Errors(Enum):
     Link = 0
     Req_type = 1
 
+
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
 class Request:
@@ -69,24 +70,22 @@ class Request:
                 self.port = parts[2][0:req_index]
                 self.request = parts[2][req_index:]
 
-        # if :
-        #     print("ERROR: Invalid link")
-        #     exit(-1)
-
     def __prepare_request(self):
-        line = ''
+        request = ''
         if self.request_type == RequestType.GET:
-            line = 'GET ' + self.request + ' HTTP/1.1\r\n'
-            line += 'Host: ' + self.domain + ' \r\n'
-            line += 'Connection: close\r\n\r\n'
+            request = ''.join((
+                'GET ', self.request, ' HTTP/1.1\r\n',
+                'Host: ', self.domain, ' \r\n',
+                'Connection: close\r\n\r\n'))
         if self.request_type == RequestType.POST:
-            line = 'POST ' + self.request + ' HTTP/1.1\r\n'
-            line += 'Host: ' + self.domain + '\r\n'
-            line += 'Content-Type: application/x-www-form-urlencoded\r\n'
-            line += 'Connection: close\r\n'
-            line += 'Content-Length: ' + str(len(self.data_to_send)) + \
-                    '\r\n\r\n' + self.data_to_send
-        return line
+            request = ''.join((
+                'POST ', self.request, ' HTTP/1.1\r\n',
+                'Host: ', self.domain, '\r\n',
+                'Content-Type: application/x-www-form-urlencoded\r\n',
+                'Connection: close\r\n',
+                'Content-Length: ', str(len(self.data_to_send)),
+                '\r\n\r\n' + self.data_to_send))
+        return request
 
     def do_request(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
