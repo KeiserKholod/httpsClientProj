@@ -71,18 +71,16 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
-        request = ''
+        request = ''.join((
+            self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
+            'Host: ', self.domain, '\r\n',
+            'Connection: close\r\n'))
         if self.request_type == RequestType.GET:
-            request = ''.join((
-                'GET ', self.request, ' HTTP/1.1\r\n',
-                'Host: ', self.domain, ' \r\n',
-                'Connection: close\r\n\r\n'))
+            request = ''.join((request, '\r\n'))
         if self.request_type == RequestType.POST:
             request = ''.join((
-                'POST ', self.request, ' HTTP/1.1\r\n',
-                'Host: ', self.domain, '\r\n',
+                request,
                 'Content-Type: application/x-www-form-urlencoded\r\n',
-                'Connection: close\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
         return request
