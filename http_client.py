@@ -6,13 +6,18 @@ from enum import Enum
 
 
 class Protocol(Enum):
-    HTTP = 0
-    HTTPS = 1
+    HTTP = 'HTTP'
+    HTTPS = 'HTTPS'
 
 
 class RequestType(Enum):
     GET = 'GET'
     POST = 'POST'
+
+
+class Errors(Enum):
+    Link = 'Link'
+    Req = 'Req'
 
 
 # keys = ["-h", "--help", "-0", "--http", "-1", "--https",
@@ -22,15 +27,51 @@ class RequestType(Enum):
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
 class Request:
-    def __init__(self):
+    def __init__(self, args):
         self.protocol = Protocol.HTTP
         self.request_type = RequestType('GET')
         self.domain = ""
         self.port = "80"
-        self.request = ""
-        self.data_to_send = ""
+        self.request = "/"
+        self.data_to_send = args.data
         self.path_to_response = ""
         self.request_to_send = ""
+
+        self.__parse_link(args.link)
+
+    @staticmethod
+    def __throw_error(type):
+        if type == Errors.Link:
+            print("ERROR: Invalid link")
+            exit(-1)
+
+    def __parse_link(self, link):
+        parts = link.split(':')
+        if len(parts) < 2 or len(parts) > 3:
+            Request.__throw_error(Errors.Link)
+
+        self.protocol = parts[0].upper()
+        if self.protocol == Protocol.HTTPS:
+            self.port = "443"
+        line = parts[1][2:]
+
+        req_index = line.find('/')
+        if req_index == -1:
+            self.domain = line
+        else:
+            self.domain = line[0:req_index]
+            self.request = line[req_index:]
+        if len(parts) == 3:
+            req_index = parts[2].find('/')
+            if req_index == -1:
+                self.port = parts[2]
+            else:
+                self.port = parts[2][0:req_index]
+                self.request = parts[2][req_index:]
+
+        # if :
+        #     print("ERROR: Invalid link")
+        #     exit(-1)
 
     def prepare_request(self):
         if self.request_type == "GET":
@@ -163,7 +204,7 @@ class Request:
 
 def create_cmd_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('link',
+    parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', action="store", default=['GET'], dest="req_type",
                         help='Possible: GET, POST')
@@ -173,4 +214,6 @@ def create_cmd_parser():
 
 
 cmd_parser = create_cmd_parser()
-print(cmd_parser.parse_args())
+args = cmd_parser.parse_args()
+print(args)
+request = Request(args)
