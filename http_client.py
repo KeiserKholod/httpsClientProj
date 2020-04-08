@@ -1,6 +1,5 @@
 import socket
 import ssl
-import sys
 import argparse
 from enum import Enum
 
@@ -16,20 +15,18 @@ class RequestType(Enum):
 
 
 class Errors(Enum):
-    Link = 'Link'
-    Req = 'Req'
-
-
-# keys = ["-h", "--help", "-0", "--http", "-1", "--https",
-#         "-t", "--type", "-r", "--req", "-d", "--data", "-n", "response"]
-
+    Link = 0
+    Req_type = 1
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
 class Request:
     def __init__(self, args):
         self.protocol = Protocol.HTTP
-        self.request_type = RequestType('GET')
+        try:
+            self.request_type = RequestType(args.req_type.upper())
+        except ValueError:
+            Request.__throw_error(Errors.Req_type)
         self.domain = ""
         self.port = "80"
         self.request = "/"
@@ -43,6 +40,9 @@ class Request:
     def __throw_error(type):
         if type == Errors.Link:
             print("ERROR: Invalid link")
+            exit(-1)
+        if type == Errors.Req_type:
+            print("ERROR: Invalid request type")
             exit(-1)
 
     def __parse_link(self, link):
@@ -73,23 +73,26 @@ class Request:
         #     print("ERROR: Invalid link")
         #     exit(-1)
 
-    def prepare_request(self):
-        if self.request_type == "GET":
+    def __prepare_request(self):
+        line = ''
+        if self.request_type == RequestType.GET:
             line = 'GET ' + self.request + ' HTTP/1.1\r\n'
             line += 'Host: ' + self.domain + ' \r\n'
             line += 'Connection: close\r\n\r\n'
-        if self.request_type == "POST":
+        if self.request_type == RequestType.POST:
             line = 'POST ' + self.request + ' HTTP/1.1\r\n'
             line += 'Host: ' + self.domain + '\r\n'
             line += 'Content-Type: application/x-www-form-urlencoded\r\n'
             line += 'Connection: close\r\n'
             line += 'Content-Length: ' + str(len(self.data_to_send)) + \
                     '\r\n\r\n' + self.data_to_send
-        self.request_to_send = line
+        return line
 
     def do_request(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.domain, int(self.port)))
+        request_to_send = self.__prepare_request()
+        print(request_to_send)
         if self.protocol == Protocol.HTTPS:
             sock = ssl.wrap_socket(sock,
                                    keyfile=None,
@@ -97,7 +100,7 @@ class Request:
                                    server_side=False,
                                    cert_reqs=ssl.CERT_NONE,
                                    ssl_version=ssl.PROTOCOL_SSLv23)
-        sock.sendall(self.request_to_send.encode())
+        sock.sendall(request_to_send.encode())
         while True:
             response = sock.recv(1024)
             if not response:
@@ -110,9 +113,9 @@ def create_cmd_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
-    parser.add_argument('-t', '--type', action="store", default=['GET'], dest="req_type",
+    parser.add_argument('-t', '--type', default='GET', dest="req_type",
                         help='Possible: GET, POST')
-    parser.add_argument('-d', '--data', action="store", default=[''], dest="data",
+    parser.add_argument('-d', '--data', default='', dest="data",
                         help='body of POST request or args of GET request')
     return parser
 
@@ -121,3 +124,4 @@ cmd_parser = create_cmd_parser()
 args = cmd_parser.parse_args()
 print(args)
 request = Request(args)
+request.do_request()
