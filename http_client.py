@@ -90,8 +90,6 @@ class Request:
 #     print(line)
 
 
-
-
 # def check_keys(args):
 #     not_error = True
 #     protocol = Protocol.HTTP
@@ -165,11 +163,14 @@ class Request:
 
 def create_cmd_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('link', help='example: http://domain.com/path')
-    parser.add_argument('-t', '--type', action="store", default=['GET'], dest="req_type", help='Possible: GET, POST')
-    parser.add_argument('-d', '--data', action="store", default=[''], dest="data")
-
+    parser.add_argument('link',
+                        help='example: http://domain.com/path')
+    parser.add_argument('-t', '--type', action="store", default=['GET'], dest="req_type",
+                        help='Possible: GET, POST')
+    parser.add_argument('-d', '--data', action="store", default=[''], dest="data",
+                        help='body of POST request or args of GET request')
     return parser
+
 
 cmd_parser = create_cmd_parser()
 print(cmd_parser.parse_args())
