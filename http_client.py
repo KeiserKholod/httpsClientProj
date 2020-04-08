@@ -12,6 +12,7 @@ class Protocol(Enum):
 class RequestType(Enum):
     GET = 'GET'
     POST = 'POST'
+    HEAD = 'HEAD'
 
 
 class Errors(Enum):
@@ -75,7 +76,8 @@ class Request:
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
             'Connection: close\r\n'))
-        if self.request_type == RequestType.GET:
+        if self.request_type == RequestType.GET or \
+                self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
         if self.request_type == RequestType.POST:
             request = ''.join((
@@ -111,7 +113,7 @@ def create_cmd_parser():
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
-                        help='Possible: GET, POST')
+                        help='Possible: GET, POST, HEAD')
     parser.add_argument('-d', '--data', default='', dest="data",
                         help='body of POST request or args of GET request')
     return parser
