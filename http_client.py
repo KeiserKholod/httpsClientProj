@@ -21,15 +21,48 @@ class RequestType(Enum):
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
-class Data:
-    protocol = Protocol.HTTP
-    request_type = RequestType('GET')
-    domain = ""
-    port = "80"
-    request = ""
-    data_to_send = ""
-    path_to_response = ""
-    # user_agent = ""
+class Request:
+    def __init__(self):
+        self.protocol = Protocol.HTTP
+        self.request_type = RequestType('GET')
+        self.domain = ""
+        self.port = "80"
+        self.request = ""
+        self.data_to_send = ""
+        self.path_to_response = ""
+        self.request_to_send = ""
+
+    def prepare_request(self):
+        if self.request_type == "GET":
+            line = 'GET ' + self.request + ' HTTP/1.1\r\n'
+            line += 'Host: ' + self.domain + ' \r\n'
+            line += 'Connection: close\r\n\r\n'
+        if self.request_type == "POST":
+            line = 'POST ' + self.request + ' HTTP/1.1\r\n'
+            line += 'Host: ' + self.domain + '\r\n'
+            line += 'Content-Type: application/x-www-form-urlencoded\r\n'
+            line += 'Connection: close\r\n'
+            line += 'Content-Length: ' + str(len(self.data_to_send)) + \
+                    '\r\n\r\n' + self.data_to_send
+        self.request_to_send = line
+
+    def do_request(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.domain, int(self.port)))
+        if self.protocol == Protocol.HTTPS:
+            sock = ssl.wrap_socket(sock,
+                                   keyfile=None,
+                                   certfile=None,
+                                   server_side=False,
+                                   cert_reqs=ssl.CERT_NONE,
+                                   ssl_version=ssl.PROTOCOL_SSLv23)
+        sock.sendall(self.request_to_send.encode())
+        while True:
+            response = sock.recv(1024)
+            if not response:
+                sock.close()
+                break
+            print(response)
 
 
 # def write_help():
@@ -56,39 +89,7 @@ class Data:
 #     # line += "\t-u or --user-agent <text> to write user-agent manually\n"
 #     print(line)
 
-def prepare_request(data):
-    if data.request_type == "GET":
-        line = 'GET ' + data.request + ' HTTP/1.1\r\n'
-        line += 'Host: ' + data.domain + ' \r\n'
-        line += 'Connection: close\r\n\r\n'
-    if data.request_type == "POST":
-        line = 'POST ' + data.request + ' HTTP/1.1\r\n'
-        line += 'Host: ' + data.domain + '\r\n'
-        line += 'Content-Type: application/x-www-form-urlencoded\r\n'
-        line += 'Connection: close\r\n'
-        line += 'Content-Length: ' + str(len(data.data_to_send)) + \
-                '\r\n\r\n' + data.data_to_send
-    return line
 
-
-def do_request(data):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((data.domain, int(data.port)))
-    if data.protocol == Protocol.HTTPS:
-        sock = ssl.wrap_socket(sock,
-                               keyfile=None,
-                               certfile=None,
-                               server_side=False,
-                               cert_reqs=ssl.CERT_NONE,
-                               ssl_version=ssl.PROTOCOL_SSLv23)
-    line = prepare_request(data)
-    sock.sendall(str.encode(line))
-    while True:
-        response = sock.recv(1024)
-        if not response:
-            sock.close()
-            break
-        print(response)
 
 
 # def check_keys(args):
@@ -162,7 +163,6 @@ def do_request(data):
 #         data.path_to_response = path_to_response
 #         return data
 
-
 def create_cmd_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('link', help='example: http://domain.com/path')
@@ -171,9 +171,5 @@ def create_cmd_parser():
 
     return parser
 
-
-# args = parse_data(input())
-# data = parse_data_from_cmd()
-# do_request(data)
 cmd_parser = create_cmd_parser()
 print(cmd_parser.parse_args())
