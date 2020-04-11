@@ -18,6 +18,7 @@ class RequestType(Enum):
 class Errors(Enum):
     Link = 0
     Req_type = 1
+    Prot_type = 2
 
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
@@ -41,18 +42,26 @@ class Request:
     @staticmethod
     def __throw_error(type):
         if type == Errors.Link:
-            print("ERROR: Invalid link")
-            exit(-1)
+            raise ValueError("ERROR: Invalid link")
+            # print("ERROR: Invalid link")
+            # exit(-1)
         if type == Errors.Req_type:
-            print("ERROR: Invalid request type")
-            exit(-1)
+            raise ValueError("Invalid request type")
+            # print("ERROR: Invalid request type")
+            # exit(-1)
+        if type == Errors.Prot_type:
+            raise ValueError("Invalid protocol")
+            # print("ERROR: Invalid protocol")
+            # exit(-1)
 
     def __parse_link(self, link):
         parts = link.split(':')
         if len(parts) < 2 or len(parts) > 3:
             Request.__throw_error(Errors.Link)
-
-        self.protocol = parts[0].upper()
+        try:
+            self.protocol = Protocol(parts[0].upper())
+        except ValueError:
+            Request.__throw_error(Errors.Prot_type)
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
         line = parts[1][2:]
@@ -119,8 +128,9 @@ def create_cmd_parser():
     return parser
 
 
-cmd_parser = create_cmd_parser()
-args = cmd_parser.parse_args()
-print(args)
-request = Request(args)
-request.do_request()
+if __name__ == '__main__':
+    cmd_parser = create_cmd_parser()
+    args = cmd_parser.parse_args()
+    print(args)
+    request = Request(args)
+    request.do_request()
