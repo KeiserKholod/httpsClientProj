@@ -51,6 +51,7 @@ class Response:
 class Request:
     def __init__(self, args):
         self.user_agent = args.agent
+        self.referer = args.referer
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -114,6 +115,9 @@ class Request:
         if self.user_agent != '':
             request = ''.join((request,
                                'User-Agent: ', self.user_agent, '\r\n'))
+        if self.referer != '':
+            request = ''.join((request,
+                               'Referer: ', self.referer, '\r\n'))
         if self.request_type == RequestType.GET or \
                 self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
@@ -157,6 +161,8 @@ def create_cmd_parser():
                         help='body of POST request or args of GET request')
     parser.add_argument('-a', '--agent', default='', dest="agent",
                         help='to send user-agent')
+    parser.add_argument('-r', '--ref', default='', dest="referer",
+                        help='to send referer')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
     parser.add_argument('-1', action='store_true', dest="is_body",
