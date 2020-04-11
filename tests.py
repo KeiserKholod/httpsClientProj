@@ -36,6 +36,28 @@ class TestInit(unittest.TestCase):
         self.assertEqual(request.port, '123')
         self.assertEqual(request.data_to_send, 'data=0123')
 
+    def test_wrong_link(self):
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['httpqweq'])
+        with self.assertRaises(ValueError):
+            request = http_client.Request(args)
+
+    def test_wrong_req_type(self):
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['https://abc.de:123/request', '-t', 'qwer'])
+        with self.assertRaises(ValueError):
+            request = http_client.Request(args)
+
+    def test_wrong_protocol(self):
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['qwerty://abc.de:123/request'])
+        with self.assertRaises(ValueError):
+            request = http_client.Request(args)
+
+
+class TestPrepareRequest(unittest.TestCase):
+    pass
+
 
 if __name__ == '__main__':
     unittest.main()
