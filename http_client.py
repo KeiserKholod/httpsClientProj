@@ -26,9 +26,18 @@ class Errors(Enum):
 class Response:
     def __init__(self, resp_bytes):
         border = resp_bytes.find(b'\r\n\r\n')
-        self.headers = resp_bytes[0:border]
+        self.headers = resp_bytes[0:border+4]
         self.body = resp_bytes[border + 4:]
 
+    def print_response(self, args):
+        text = b''
+        if args.isHead:
+            text = self.headers
+        if args.isBody or not (args.isHead or args.isAll):
+            text = b''.join((text, self.body))
+        if args.isAll:
+            text = b''.join((self.headers, self.body))
+        print(text)
 
 
 class Request:
@@ -41,7 +50,7 @@ class Request:
         self.domain = ""
         self.port = "80"
         self.request = "/"
-        self.data_to_send = args.data
+        self.data_to_send = args.body
         self.path_to_response = ""
         self.request_to_send = ""
         self.__parse_link(args.link)
@@ -122,7 +131,7 @@ class Request:
                 sock.close()
                 break
             response = Response(responseBytes)
-            print(response)
+            return response
 
 
 def create_cmd_parser():
@@ -131,8 +140,14 @@ def create_cmd_parser():
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
                         help='Possible: GET, POST, HEAD')
-    parser.add_argument('-d', '--data', default='', dest="data",
+    parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('-0', action='store_true', dest="isHead",
+                        help='to write head of response')
+    parser.add_argument('-1', action='store_true', dest="isBody",
+                        help='to write body of response')
+    parser.add_argument('-2', '--all', action='store_true', dest="isAll",
+                        help='to write all response')
     return parser
 
 
@@ -142,3 +157,4 @@ if __name__ == '__main__':
     print(args)
     request = Request(args)
     response = request.do_request()
+    response.print_response(args)
