@@ -50,6 +50,7 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.request_to_send = b''
         self.user_agent = args.agent
         self.referer = args.referer
         self.cookie = args.cookie
@@ -106,7 +107,7 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
-        if self.request_type == RequestType.GET:
+        if self.request_type == RequestType.GET and self.data_to_send != '':
             self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
@@ -130,8 +131,7 @@ class Request:
                 'Content-Type: application/x-www-form-urlencoded\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
-        if args.show_request != 0:
-            print(request)
+        self.request_to_send = request
         return request
 
     def do_request(self):
