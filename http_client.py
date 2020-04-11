@@ -50,6 +50,7 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.show_request = args.show_request
         self.request_to_send = b''
         self.user_agent = args.agent
         self.referer = args.referer
@@ -132,6 +133,8 @@ class Request:
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
         self.request_to_send = request
+        if self.show_request != 0:
+            print(request)
         return request
 
     def do_request(self):
