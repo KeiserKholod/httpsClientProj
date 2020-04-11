@@ -25,19 +25,27 @@ class Errors(Enum):
 
 class Response:
     def __init__(self, resp_bytes):
+        self.response_to_print = b''
         border = resp_bytes.find(b'\r\n\r\n')
-        self.headers = resp_bytes[0:border+4]
+        self.headers = resp_bytes[0:border + 4]
         self.body = resp_bytes[border + 4:]
 
-    def print_response(self, args):
+    def prepare_response(self, args):
         text = b''
-        if args.isHead:
+        if args.is_head:
             text = self.headers
-        if args.isBody or not (args.isHead or args.isAll):
+        if args.is_body or not (args.is_head or args.is_all):
             text = b''.join((text, self.body))
-        if args.isAll:
+        if args.is_all:
             text = b''.join((self.headers, self.body))
-        print(text)
+        self.response_to_print = text
+
+    def print_response(self, args):
+        if args.path_to_response != '':
+            file = open(args.path_to_response, 'wb')
+            file.write(self.response_to_print)
+        else:
+            print(self.response_to_print)
 
 
 class Request:
@@ -51,7 +59,6 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
-        self.path_to_response = ""
         self.request_to_send = ""
         self.__parse_link(args.link)
 
@@ -142,12 +149,14 @@ def create_cmd_parser():
                         help='Possible: GET, POST, HEAD')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
-    parser.add_argument('-0', action='store_true', dest="isHead",
+    parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
-    parser.add_argument('-1', action='store_true', dest="isBody",
+    parser.add_argument('-1', action='store_true', dest="is_body",
                         help='to write body of response')
-    parser.add_argument('-2', '--all', action='store_true', dest="isAll",
+    parser.add_argument('-2', '--all', action='store_true', dest="is_all",
                         help='to write all response')
+    parser.add_argument('-f', '--file', default='', dest="path_to_response",
+                        help='save response in file')
     return parser
 
 
@@ -157,4 +166,5 @@ if __name__ == '__main__':
     print(args)
     request = Request(args)
     response = request.do_request()
+    response.prepare_response(args)
     response.print_response(args)
