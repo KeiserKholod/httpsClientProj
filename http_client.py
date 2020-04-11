@@ -50,6 +50,7 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.user_agent = args.agent
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -110,6 +111,9 @@ class Request:
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
             'Connection: close\r\n'))
+        if self.user_agent != '':
+            request = ''.join((request,
+                               'User-Agent: ', self.user_agent, '\r\n'))
         if self.request_type == RequestType.GET or \
                 self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
@@ -151,6 +155,8 @@ def create_cmd_parser():
                         help='Possible: GET, POST, HEAD')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('-a', '--agent', default='', dest="agent",
+                        help='to send user-agent')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
     parser.add_argument('-1', action='store_true', dest="is_body",
