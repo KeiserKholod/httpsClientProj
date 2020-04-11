@@ -2,7 +2,7 @@ import unittest
 import http_client
 
 
-class TestInitReq(unittest.TestCase):
+class TestRequest(unittest.TestCase):
     def test_request_get_http(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-t', 'get'])
@@ -53,6 +53,49 @@ class TestInitReq(unittest.TestCase):
         args = cmd_parser.parse_args(['qwerty://abc.de:123/request'])
         with self.assertRaises(ValueError):
             request = http_client.Request(args)
+
+    def test_user_agent(self):
+        req = 'GET /t/xfg/post HTTP/1.1\r\n' \
+              'Host: ptsv2.com\r\n' \
+              'Connection: close\r\n' \
+              'User-Agent: qwerty\r\n\r\n'
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-a', 'qwerty'])
+        request = http_client.Request(args)
+        request.do_request()
+        self.assertEqual(req, request.request_to_send)
+
+    def test_referer(self):
+        req = 'GET /t/xfg/post HTTP/1.1\r\n' \
+              'Host: ptsv2.com\r\n' \
+              'Connection: close\r\n' \
+              'Referer: qwerty\r\n\r\n'
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-r', 'qwerty'])
+        request = http_client.Request(args)
+        request.do_request()
+        self.assertEqual(req, request.request_to_send)
+
+    def test_cookie(self):
+        req = 'GET /t/xfg/post HTTP/1.1\r\n' \
+              'Host: ptsv2.com\r\n' \
+              'Connection: close\r\n' \
+              'Cookie: qwerty\r\n\r\n'
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-c', 'qwerty'])
+        request = http_client.Request(args)
+        request.do_request()
+        self.assertEqual(req, request.request_to_send)
+
+    def test_get_with_args(self):
+        req = 'GET /t/xfg/post?qw=12 HTTP/1.1\r\n' \
+              'Host: ptsv2.com\r\n' \
+              'Connection: close\r\n\r\n'
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-d', 'qw=12'])
+        request = http_client.Request(args)
+        request.do_request()
+        self.assertEqual(req, request.request_to_send)
 
 
 class TestResponse(unittest.TestCase):
