@@ -104,6 +104,8 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
+        if self.request_type == RequestType.GET:
+            self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
