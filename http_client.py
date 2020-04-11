@@ -52,6 +52,7 @@ class Request:
     def __init__(self, args):
         self.user_agent = args.agent
         self.referer = args.referer
+        self.cookie =args.cookie
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -118,6 +119,9 @@ class Request:
         if self.referer != '':
             request = ''.join((request,
                                'Referer: ', self.referer, '\r\n'))
+        if self.cookie != '':
+            request = ''.join((request,
+                               'Cookie: ',  self.cookie, '\r\n'))
         if self.request_type == RequestType.GET or \
                 self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
@@ -163,6 +167,8 @@ def create_cmd_parser():
                         help='to send user-agent')
     parser.add_argument('-r', '--ref', default='', dest="referer",
                         help='to send referer')
+    parser.add_argument('-c', '--cookie', default='', dest="cookie",
+                        help='to send cookie')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
     parser.add_argument('-1', action='store_true', dest="is_body",
