@@ -50,6 +50,11 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.show_request = args.show_request
+        self.request_to_send = b''
+        self.user_agent = args.agent
+        self.referer = args.referer
+        self.cookie = args.cookie
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -59,7 +64,6 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
-        self.request_to_send = ""
         self.__parse_link(args.link)
 
     @staticmethod
@@ -104,10 +108,21 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
+        if self.request_type == RequestType.GET and self.data_to_send != '':
+            self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
             'Connection: close\r\n'))
+        if self.user_agent != '':
+            request = ''.join((request,
+                               'User-Agent: ', self.user_agent, '\r\n'))
+        if self.referer != '':
+            request = ''.join((request,
+                               'Referer: ', self.referer, '\r\n'))
+        if self.cookie != '':
+            request = ''.join((request,
+                               'Cookie: ', self.cookie, '\r\n'))
         if self.request_type == RequestType.GET or \
                 self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
@@ -117,13 +132,15 @@ class Request:
                 'Content-Type: application/x-www-form-urlencoded\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
+        self.request_to_send = request
+        if self.show_request != 0:
+            print(request)
         return request
 
     def do_request(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.domain, int(self.port)))
         request_to_send = self.__prepare_request()
-        print(request_to_send)
         if self.protocol == Protocol.HTTPS:
             sock = ssl.wrap_socket(sock,
                                    keyfile=None,
@@ -132,13 +149,15 @@ class Request:
                                    cert_reqs=ssl.CERT_NONE,
                                    ssl_version=ssl.PROTOCOL_SSLv23)
         sock.sendall(request_to_send.encode())
+        all_response = b''
         while True:
-            responseBytes = sock.recv(1024)
-            if not responseBytes:
-                sock.close()
+            response_bytes = sock.recv(1024)
+            all_response = b''.join((all_response, response_bytes))
+            if not response_bytes:
                 break
-            response = Response(responseBytes)
-            return response
+        sock.close()
+        response = Response(all_response)
+        return response
 
 
 def create_cmd_parser():
@@ -149,6 +168,14 @@ def create_cmd_parser():
                         help='Possible: GET, POST, HEAD')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('-a', '--agent', default='', dest="agent",
+                        help='to send user-agent')
+    parser.add_argument('-r', '--ref', default='', dest="referer",
+                        help='to send referer')
+    parser.add_argument('-c', '--cookie', default='', dest="cookie",
+                        help='to send cookie')
+    parser.add_argument('-s', '--show', action='store_true', dest="show_request",
+                        help='to show request')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
     parser.add_argument('-1', action='store_true', dest="is_body",
@@ -168,3 +195,4 @@ if __name__ == '__main__':
     response = request.do_request()
     response.prepare_response(args)
     response.print_response(args)
+
