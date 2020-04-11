@@ -52,7 +52,7 @@ class Request:
     def __init__(self, args):
         self.user_agent = args.agent
         self.referer = args.referer
-        self.cookie =args.cookie
+        self.cookie = args.cookie
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -62,7 +62,6 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
-        self.request_to_send = ""
         self.__parse_link(args.link)
 
     @staticmethod
@@ -121,7 +120,7 @@ class Request:
                                'Referer: ', self.referer, '\r\n'))
         if self.cookie != '':
             request = ''.join((request,
-                               'Cookie: ',  self.cookie, '\r\n'))
+                               'Cookie: ', self.cookie, '\r\n'))
         if self.request_type == RequestType.GET or \
                 self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
@@ -131,13 +130,14 @@ class Request:
                 'Content-Type: application/x-www-form-urlencoded\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
+        if args.show_request != 0:
+            print(request)
         return request
 
     def do_request(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.domain, int(self.port)))
         request_to_send = self.__prepare_request()
-        print(request_to_send)
         if self.protocol == Protocol.HTTPS:
             sock = ssl.wrap_socket(sock,
                                    keyfile=None,
@@ -169,6 +169,8 @@ def create_cmd_parser():
                         help='to send referer')
     parser.add_argument('-c', '--cookie', default='', dest="cookie",
                         help='to send cookie')
+    parser.add_argument('-s', '--show', action='store_true', dest="show_request",
+                        help='to show request')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
     parser.add_argument('-1', action='store_true', dest="is_body",
