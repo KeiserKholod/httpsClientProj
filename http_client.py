@@ -23,6 +23,14 @@ class Errors(Enum):
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
+class Response:
+    def __init__(self, resp_bytes):
+        border = resp_bytes.find(b'\r\n\r\n')
+        self.headers = resp_bytes[0:border]
+        self.body = resp_bytes[border + 4:]
+
+
+
 class Request:
     def __init__(self, args):
         self.protocol = Protocol.HTTP
@@ -36,7 +44,6 @@ class Request:
         self.data_to_send = args.data
         self.path_to_response = ""
         self.request_to_send = ""
-
         self.__parse_link(args.link)
 
     @staticmethod
@@ -110,10 +117,11 @@ class Request:
                                    ssl_version=ssl.PROTOCOL_SSLv23)
         sock.sendall(request_to_send.encode())
         while True:
-            response = sock.recv(1024)
-            if not response:
+            responseBytes = sock.recv(1024)
+            if not responseBytes:
                 sock.close()
                 break
+            response = Response(responseBytes)
             print(response)
 
 
@@ -133,4 +141,4 @@ if __name__ == '__main__':
     args = cmd_parser.parse_args()
     print(args)
     request = Request(args)
-    request.do_request()
+    response = request.do_request()
