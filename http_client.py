@@ -149,13 +149,15 @@ class Request:
                                    cert_reqs=ssl.CERT_NONE,
                                    ssl_version=ssl.PROTOCOL_SSLv23)
         sock.sendall(request_to_send.encode())
+        all_response = b''
         while True:
-            responseBytes = sock.recv(1024)
-            if not responseBytes:
-                sock.close()
+            response_bytes = sock.recv(1024)
+            all_response = b''.join((all_response, response_bytes))
+            if not response_bytes:
                 break
-            response = Response(responseBytes)
-            return response
+        sock.close()
+        response = Response(all_response)
+        return response
 
 
 def create_cmd_parser():
