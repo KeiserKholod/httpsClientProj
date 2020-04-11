@@ -1,4 +1,4 @@
 .idea/
 venv/
-__pycache__/
 .coverage
+__pycache__/

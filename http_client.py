@@ -12,17 +12,49 @@ class Protocol(Enum):
 class RequestType(Enum):
     GET = 'GET'
     POST = 'POST'
+    HEAD = 'HEAD'
 
 
 class Errors(Enum):
     Link = 0
     Req_type = 1
+    Prot_type = 2
 
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
+class Response:
+    def __init__(self, resp_bytes):
+        self.response_to_print = b''
+        border = resp_bytes.find(b'\r\n\r\n')
+        self.headers = resp_bytes[0:border + 4]
+        self.body = resp_bytes[border + 4:]
+
+    def prepare_response(self, args):
+        text = b''
+        if args.is_head:
+            text = self.headers
+        if args.is_body or not (args.is_head or args.is_all):
+            text = b''.join((text, self.body))
+        if args.is_all:
+            text = b''.join((self.headers, self.body))
+        self.response_to_print = text
+
+    def print_response(self, args):
+        if args.path_to_response != '':
+            file = open(args.path_to_response, 'wb')
+            file.write(self.response_to_print)
+        else:
+            print(self.response_to_print)
+
+
 class Request:
     def __init__(self, args):
+        self.show_request = args.show_request
+        self.request_to_send = b''
+        self.user_agent = args.agent
+        self.referer = args.referer
+        self.cookie = args.cookie
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -31,27 +63,32 @@ class Request:
         self.domain = ""
         self.port = "80"
         self.request = "/"
-        self.data_to_send = args.data
-        self.path_to_response = ""
-        self.request_to_send = ""
-
+        self.data_to_send = args.body
         self.__parse_link(args.link)
 
     @staticmethod
     def __throw_error(type):
         if type == Errors.Link:
-            print("ERROR: Invalid link")
-            exit(-1)
+            raise ValueError("ERROR: Invalid link")
+            # print("ERROR: Invalid link")
+            # exit(-1)
         if type == Errors.Req_type:
-            print("ERROR: Invalid request type")
-            exit(-1)
+            raise ValueError("Invalid request type")
+            # print("ERROR: Invalid request type")
+            # exit(-1)
+        if type == Errors.Prot_type:
+            raise ValueError("Invalid protocol")
+            # print("ERROR: Invalid protocol")
+            # exit(-1)
 
     def __parse_link(self, link):
         parts = link.split(':')
         if len(parts) < 2 or len(parts) > 3:
             Request.__throw_error(Errors.Link)
-
-        self.protocol = parts[0].upper()
+        try:
+            self.protocol = Protocol(parts[0].upper())
+        except ValueError:
+            Request.__throw_error(Errors.Prot_type)
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
         line = parts[1][2:]
@@ -71,11 +108,23 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
+        if self.request_type == RequestType.GET and self.data_to_send != '':
+            self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
             'Connection: close\r\n'))
-        if self.request_type == RequestType.GET:
+        if self.user_agent != '':
+            request = ''.join((request,
+                               'User-Agent: ', self.user_agent, '\r\n'))
+        if self.referer != '':
+            request = ''.join((request,
+                               'Referer: ', self.referer, '\r\n'))
+        if self.cookie != '':
+            request = ''.join((request,
+                               'Cookie: ', self.cookie, '\r\n'))
+        if self.request_type == RequestType.GET or \
+                self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
         if self.request_type == RequestType.POST:
             request = ''.join((
@@ -83,13 +132,15 @@ class Request:
                 'Content-Type: application/x-www-form-urlencoded\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
+        self.request_to_send = request
+        if self.show_request != 0:
+            print(request)
         return request
 
     def do_request(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.domain, int(self.port)))
         request_to_send = self.__prepare_request()
-        print(request_to_send)
         if self.protocol == Protocol.HTTPS:
             sock = ssl.wrap_socket(sock,
                                    keyfile=None,
@@ -98,12 +149,15 @@ class Request:
                                    cert_reqs=ssl.CERT_NONE,
                                    ssl_version=ssl.PROTOCOL_SSLv23)
         sock.sendall(request_to_send.encode())
+        all_response = b''
         while True:
-            response = sock.recv(1024)
-            if not response:
-                sock.close()
+            response_bytes = sock.recv(1024)
+            all_response = b''.join((all_response, response_bytes))
+            if not response_bytes:
                 break
-            print(response)
+        sock.close()
+        response = Response(all_response)
+        return response
 
 
 def create_cmd_parser():
@@ -111,14 +165,34 @@ def create_cmd_parser():
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
-                        help='Possible: GET, POST')
-    parser.add_argument('-d', '--data', default='', dest="data",
+                        help='Possible: GET, POST, HEAD')
+    parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('-a', '--agent', default='', dest="agent",
+                        help='to send user-agent')
+    parser.add_argument('-r', '--ref', default='', dest="referer",
+                        help='to send referer')
+    parser.add_argument('-c', '--cookie', default='', dest="cookie",
+                        help='to send cookie')
+    parser.add_argument('-s', '--show', action='store_true', dest="show_request",
+                        help='to show request')
+    parser.add_argument('-0', action='store_true', dest="is_head",
+                        help='to write head of response')
+    parser.add_argument('-1', action='store_true', dest="is_body",
+                        help='to write body of response')
+    parser.add_argument('-2', '--all', action='store_true', dest="is_all",
+                        help='to write all response')
+    parser.add_argument('-f', '--file', default='', dest="path_to_response",
+                        help='save response in file')
     return parser
 
 
-cmd_parser = create_cmd_parser()
-args = cmd_parser.parse_args()
-print(args)
-request = Request(args)
-request.do_request()
+if __name__ == '__main__':
+    cmd_parser = create_cmd_parser()
+    args = cmd_parser.parse_args()
+    print(args)
+    request = Request(args)
+    response = request.do_request()
+    response.prepare_response(args)
+    response.print_response(args)
+
