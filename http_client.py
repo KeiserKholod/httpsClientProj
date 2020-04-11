@@ -12,6 +12,7 @@ class Protocol(Enum):
 class RequestType(Enum):
     GET = 'GET'
     POST = 'POST'
+    HEAD = 'HEAD'
 
 
 class Errors(Enum):
@@ -21,6 +22,23 @@ class Errors(Enum):
 
 
 # "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
+
+class Response:
+    def __init__(self, resp_bytes):
+        border = resp_bytes.find(b'\r\n\r\n')
+        self.headers = resp_bytes[0:border+4]
+        self.body = resp_bytes[border + 4:]
+
+    def print_response(self, args):
+        text = b''
+        if args.isHead:
+            text = self.headers
+        if args.isBody or not (args.isHead or args.isAll):
+            text = b''.join((text, self.body))
+        if args.isAll:
+            text = b''.join((self.headers, self.body))
+        print(text)
+
 
 class Request:
     def __init__(self, args):
@@ -32,10 +50,9 @@ class Request:
         self.domain = ""
         self.port = "80"
         self.request = "/"
-        self.data_to_send = args.data
+        self.data_to_send = args.body
         self.path_to_response = ""
         self.request_to_send = ""
-
         self.__parse_link(args.link)
 
     @staticmethod
@@ -84,7 +101,8 @@ class Request:
             self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
             'Host: ', self.domain, '\r\n',
             'Connection: close\r\n'))
-        if self.request_type == RequestType.GET:
+        if self.request_type == RequestType.GET or \
+                self.request_type == RequestType.HEAD:
             request = ''.join((request, '\r\n'))
         if self.request_type == RequestType.POST:
             request = ''.join((
@@ -108,11 +126,12 @@ class Request:
                                    ssl_version=ssl.PROTOCOL_SSLv23)
         sock.sendall(request_to_send.encode())
         while True:
-            response = sock.recv(1024)
-            if not response:
+            responseBytes = sock.recv(1024)
+            if not responseBytes:
                 sock.close()
                 break
-            print(response)
+            response = Response(responseBytes)
+            return response
 
 
 def create_cmd_parser():
@@ -120,9 +139,15 @@ def create_cmd_parser():
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
-                        help='Possible: GET, POST')
-    parser.add_argument('-d', '--data', default='', dest="data",
+                        help='Possible: GET, POST, HEAD')
+    parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('-0', action='store_true', dest="isHead",
+                        help='to write head of response')
+    parser.add_argument('-1', action='store_true', dest="isBody",
+                        help='to write body of response')
+    parser.add_argument('-2', '--all', action='store_true', dest="isAll",
+                        help='to write all response')
     return parser
 
 
@@ -131,4 +156,5 @@ if __name__ == '__main__':
     args = cmd_parser.parse_args()
     print(args)
     request = Request(args)
-    request.do_request()
+    response = request.do_request()
+    response.print_response(args)
