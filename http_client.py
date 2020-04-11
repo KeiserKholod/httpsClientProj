@@ -51,7 +51,7 @@ class Request:
         if len(parts) < 2 or len(parts) > 3:
             Request.__throw_error(Errors.Link)
 
-        self.protocol = parts[0].upper()
+        self.protocol = Protocol(parts[0].upper())
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
         line = parts[1][2:]
@@ -117,8 +117,9 @@ def create_cmd_parser():
     return parser
 
 
-cmd_parser = create_cmd_parser()
-args = cmd_parser.parse_args()
-print(args)
-request = Request(args)
-request.do_request()
+if __name__ == '__main__':
+    cmd_parser = create_cmd_parser()
+    args = cmd_parser.parse_args()
+    print(args)
+    request = Request(args)
+    request.do_request()
