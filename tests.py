@@ -55,9 +55,5 @@ class TestInit(unittest.TestCase):
             request = http_client.Request(args)
 
 
-class TestPrepareRequest(unittest.TestCase):
-    pass
-
-
 if __name__ == '__main__':
     unittest.main()
