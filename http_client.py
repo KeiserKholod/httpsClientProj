@@ -182,7 +182,8 @@ def create_cmd_parser():
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
     parser.add_argument('--body-file', default='', dest="path_to_body",
-                        help='body of POST request or args of GET request')
+                        help='get body of POST request or'
+                             ' args of GET request from file ')
     parser.add_argument('-a', '--agent', default='', dest="agent",
                         help='to send user-agent')
     parser.add_argument('-r', '--ref', default='', dest="referer",
@@ -191,7 +192,7 @@ def create_cmd_parser():
                         help='to send cookie')
     parser.add_argument('--cookie-file', default='', dest="path_to_cookie",
                         help='to send cookie from file')
-    parser.add_argument('-s', '--show', action='store_true', dest="show_request",
+    parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
     parser.add_argument('-0', action='store_true', dest="is_head",
                         help='to write head of response')
