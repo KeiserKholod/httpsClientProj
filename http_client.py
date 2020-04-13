@@ -51,6 +51,7 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.cont_type = 'application/x-www-form-urlencoded'
         self.show_request = args.show_request
         self.request_to_send = b''
         self.user_agent = args.agent
@@ -118,7 +119,7 @@ class Request:
         if self.request_type == RequestType.POST:
             request = ''.join((
                 request,
-                'Content-Type: application/x-www-form-urlencoded\r\n',
+                'Content-Type: ', self.cont_type, '\r\n',
                 'Content-Length: ', str(len(self.data_to_send)),
                 '\r\n\r\n' + self.data_to_send))
         self.request_to_send = request
