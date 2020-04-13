@@ -45,6 +45,7 @@ class Response:
         if args.path_to_response != '':
             file = open(args.path_to_response, 'wb')
             file.write(self.response_to_print)
+            file.close()
         else:
             print(self.response_to_print)
 
@@ -57,6 +58,8 @@ class Request:
         self.user_agent = args.agent
         self.referer = args.referer
         self.cookie = args.cookie
+        if args.path_to_cookie != '':
+            self.__get_cookie_from_file(args.path_to_cookie)
         self.protocol = Protocol.HTTP
         try:
             self.request_type = RequestType(args.req_type.upper())
@@ -66,7 +69,28 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
+        if args.path_to_body != '':
+            self.__get_data_to_send_from_file(args.path_to_body)
         self.__parse_link(args.link)
+
+    def __get_cookie_from_file(self, path):
+        file = open(path, 'r')
+        try:
+            self.cookie = file.read()
+        except Errors:
+            pass
+        finally:
+            file.close()
+
+    def __get_data_to_send_from_file(self, path):
+        file = open(path, 'r')
+        try:
+            self.data_to_send = file.read()
+        except Errors:
+            pass
+        finally:
+            file.close()
+
 
     @staticmethod
     def __throw_error(type):
@@ -158,12 +182,16 @@ def create_cmd_parser():
                         help='Possible: GET, POST, HEAD')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('--body-file', default='', dest="path_to_body",
+                        help='body of POST request or args of GET request')
     parser.add_argument('-a', '--agent', default='', dest="agent",
                         help='to send user-agent')
     parser.add_argument('-r', '--ref', default='', dest="referer",
                         help='to send referer')
     parser.add_argument('-c', '--cookie', default='', dest="cookie",
                         help='to send cookie')
+    parser.add_argument('--cookie-file', default='', dest="path_to_cookie",
+                        help='to send cookie from file')
     parser.add_argument('-s', '--show', action='store_true', dest="show_request",
                         help='to show request')
     parser.add_argument('-0', action='store_true', dest="is_head",
