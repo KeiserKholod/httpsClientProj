@@ -2,6 +2,7 @@ import socket
 import ssl
 import argparse
 from enum import Enum
+from yarl import URL
 
 
 class Protocol(Enum):
@@ -82,30 +83,18 @@ class Request:
             # exit(-1)
 
     def __parse_link(self, link):
-        parts = link.split(':')
-        if len(parts) < 2 or len(parts) > 3:
-            Request.__throw_error(Errors.Link)
+        url = URL(link)
         try:
-            self.protocol = Protocol(parts[0].upper())
+            self.protocol = Protocol(url.scheme.upper())
         except ValueError:
             Request.__throw_error(Errors.Prot_type)
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
-        line = parts[1][2:]
-
-        req_index = line.find('/')
-        if req_index == -1:
-            self.domain = line
-        else:
-            self.domain = line[0:req_index]
-            self.request = line[req_index:]
-        if len(parts) == 3:
-            req_index = parts[2].find('/')
-            if req_index == -1:
-                self.port = parts[2]
-            else:
-                self.port = parts[2][0:req_index]
-                self.request = parts[2][req_index:]
+        port = url.port
+        if port is not None:
+            self.port = str(port)
+        self.domain = url.host
+        self.request = url.path_qs
 
     def __prepare_request(self):
         if self.request_type == RequestType.GET and self.data_to_send != '':
@@ -195,4 +184,3 @@ if __name__ == '__main__':
     response = request.do_request()
     response.prepare_response(args)
     response.print_response(args)
-
