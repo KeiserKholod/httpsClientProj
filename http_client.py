@@ -91,7 +91,6 @@ class Request:
         finally:
             file.close()
 
-
     @staticmethod
     def __throw_error(type):
         if type == Errors.Link:
