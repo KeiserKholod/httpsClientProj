@@ -31,17 +31,21 @@ class Response:
     def __init__(self, resp_bytes):
         self.response_to_print = b''
         border = resp_bytes.find(b'\r\n\r\n')
-        self.headers = resp_bytes[0:border + 4]
+        meta_data_border = resp_bytes.find(b'\r\n')
+        self.headers = resp_bytes[meta_data_border + 2:border + 4]
+        self.meta_data = resp_bytes[0:meta_data_border]
         self.body = resp_bytes[border + 4:]
 
     def prepare_response(self, args):
         text = b''
+        if args.is_meta:
+            text = self.meta_data
         if args.is_head:
             text = self.headers
-        if args.is_body or not (args.is_head or args.is_all):
+        if args.is_body or not (args.is_head or args.is_all or args.is_meta):
             text = b''.join((text, self.body))
         if args.is_all:
-            text = b''.join((self.headers, self.body))
+            text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
     def print_response(self, args):
@@ -198,11 +202,13 @@ def create_cmd_parser():
                         help='to send cookie')
     parser.add_argument('-s', '--show', action='store_true', dest="show_request",
                         help='to show request')
-    parser.add_argument('-0', action='store_true', dest="is_head",
+    parser.add_argument('-0', action='store_true', dest="is_meta",
+                        help='to write meta data of response')
+    parser.add_argument('-1', action='store_true', dest="is_head",
                         help='to write head of response')
-    parser.add_argument('-1', action='store_true', dest="is_body",
+    parser.add_argument('-2', action='store_true', dest="is_body",
                         help='to write body of response')
-    parser.add_argument('-2', '--all', action='store_true', dest="is_all",
+    parser.add_argument('-3', '--all', action='store_true', dest="is_all",
                         help='to write all response')
     parser.add_argument('-f', '--file', default='', dest="path_to_response",
                         help='save response in file')
