@@ -13,6 +13,12 @@ class RequestMethod(Enum):
     GET = 'GET'
     POST = 'POST'
     HEAD = 'HEAD'
+    OPTIONS = 'OPTIONS'
+    CONNECT = 'CONNECT'
+    TRACE = 'TRACE'
+    DELETE = 'DELETE'
+    PUT = 'PUT'
+    TRACE = 'TRACE'
 
 
 class Errors(Enum):
@@ -20,8 +26,6 @@ class Errors(Enum):
     Req_type = 1
     Prot_type = 2
 
-
-# "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
 
 class Response:
     def __init__(self, resp_bytes):
@@ -92,7 +96,10 @@ class Request:
             self.headers['Referer'] = self.referer
         if self.cookie != '':
             self.headers['Cookie'] = self.cookie
-        if self.request_method == RequestMethod.POST:
+        if self.request_method == RequestMethod.POST or\
+                self.request_method == RequestMethod.DELETE or\
+                self.request_method == RequestMethod.PUT or\
+                self.request_method == RequestMethod.PATCH:
             self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             self.headers['Content-Length'] = str(len(self.data_to_send))
 
@@ -131,7 +138,10 @@ class Request:
             request = ''.join((request, key, ': ', self.headers[key], '\r\n'))
 
         request = ''.join((request, '\r\n'))
-        if self.request_method == RequestMethod.POST:
+        if self.request_method == RequestMethod.POST or\
+                self.request_method == RequestMethod.DELETE or\
+                self.request_method == RequestMethod.PUT or\
+                self.request_method == RequestMethod.PATCH:
             request = ''.join((
                 request, self.data_to_send))
         self.request_to_send = request
@@ -167,7 +177,7 @@ def create_cmd_parser():
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
-                        help='Possible: GET, POST, HEAD')
+                        help='Possible: GET, POST, HEAD, OPTIONS, CONNECT, TRACE, DELETE, PUT, TRACE')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
     parser.add_argument('-a', '--agent', default='', dest="agent",
