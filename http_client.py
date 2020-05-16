@@ -55,6 +55,7 @@ class Response:
 class Request:
     def __init__(self, args):
         self.headers = dict()
+        self.custom_headers = args.custom_headers
         self.show_request = args.show_request
         self.request_to_send = b''
         self.user_agent = args.agent
@@ -87,6 +88,14 @@ class Request:
             # print("ERROR: Invalid protocol")
             # exit(-1)
 
+    def __parse_custom_headers(self):
+        if not (self.custom_headers is None):
+            for header in self.custom_headers:
+                separator_ind = header.find(':')
+                key = header[0:separator_ind]
+                value = header[separator_ind + 1:].strip()
+                self.headers[key] = value
+
     def __init_headers(self):
         self.headers['Host'] = self.domain
         self.headers['Connection'] = 'close'
@@ -102,6 +111,7 @@ class Request:
                 self.request_method == RequestMethod.PATCH:
             self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             self.headers['Content-Length'] = str(len(self.data_to_send))
+        self.__parse_custom_headers()
 
     def __parse_link(self, link):
         parts = link.split(':')
@@ -196,6 +206,8 @@ def create_cmd_parser():
                         help='to write all response')
     parser.add_argument('-f', '--file', default='', dest="path_to_response",
                         help='save response in file')
+    parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
+                        help='to add custom headers or change already existing')
     return parser
 
 
