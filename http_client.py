@@ -9,7 +9,7 @@ class Protocol(Enum):
     HTTPS = 'HTTPS'
 
 
-class RequestType(Enum):
+class RequestMethod(Enum):
     GET = 'GET'
     POST = 'POST'
     HEAD = 'HEAD'
@@ -50,6 +50,7 @@ class Response:
 
 class Request:
     def __init__(self, args):
+        self.headers = dict()
         self.show_request = args.show_request
         self.request_to_send = b''
         self.user_agent = args.agent
@@ -57,7 +58,7 @@ class Request:
         self.cookie = args.cookie
         self.protocol = Protocol.HTTP
         try:
-            self.request_type = RequestType(args.req_type.upper())
+            self.request_method = RequestMethod(args.req_type.upper())
         except ValueError:
             Request.__throw_error(Errors.Req_type)
         self.domain = ""
@@ -65,6 +66,7 @@ class Request:
         self.request = "/"
         self.data_to_send = args.body
         self.__parse_link(args.link)
+        self.__init_headers()
 
     @staticmethod
     def __throw_error(type):
@@ -80,6 +82,19 @@ class Request:
             raise ValueError("Invalid protocol")
             # print("ERROR: Invalid protocol")
             # exit(-1)
+
+    def __init_headers(self):
+        self.headers['Host'] = self.domain
+        self.headers['Connection'] = 'close'
+        if self.user_agent != '':
+            self.headers['User-Agent'] = self.user_agent
+        if self.referer != '':
+            self.headers['Referer'] = self.referer
+        if self.cookie != '':
+            self.headers['Cookie'] = self.cookie
+        if self.request_method == RequestMethod.POST:
+            self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            self.headers['Content-Length'] = str(len(self.data_to_send))
 
     def __parse_link(self, link):
         parts = link.split(':')
@@ -108,30 +123,17 @@ class Request:
                 self.request = parts[2][req_index:]
 
     def __prepare_request(self):
-        if self.request_type == RequestType.GET and self.data_to_send != '':
+        if self.request_method == RequestMethod.GET and self.data_to_send != '':
             self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
-            self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
-            'Host: ', self.domain, '\r\n',
-            'Connection: close\r\n'))
-        if self.user_agent != '':
-            request = ''.join((request,
-                               'User-Agent: ', self.user_agent, '\r\n'))
-        if self.referer != '':
-            request = ''.join((request,
-                               'Referer: ', self.referer, '\r\n'))
-        if self.cookie != '':
-            request = ''.join((request,
-                               'Cookie: ', self.cookie, '\r\n'))
-        if self.request_type == RequestType.GET or \
-                self.request_type == RequestType.HEAD:
-            request = ''.join((request, '\r\n'))
-        if self.request_type == RequestType.POST:
+            self.request_method.value, ' ', self.request, ' HTTP/1.1\r\n'))
+        for key in self.headers.keys():
+            request = ''.join((request, key, ': ', self.headers[key], '\r\n'))
+
+        request = ''.join((request, '\r\n'))
+        if self.request_method == RequestMethod.POST:
             request = ''.join((
-                request,
-                'Content-Type: application/x-www-form-urlencoded\r\n',
-                'Content-Length: ', str(len(self.data_to_send)),
-                '\r\n\r\n' + self.data_to_send))
+                request, self.data_to_send))
         self.request_to_send = request
         if self.show_request != 0:
             print(request)
@@ -195,4 +197,3 @@ if __name__ == '__main__':
     response = request.do_request()
     response.prepare_response(args)
     response.print_response(args)
-
