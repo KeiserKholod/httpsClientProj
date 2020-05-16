@@ -18,7 +18,7 @@ class RequestMethod(Enum):
     TRACE = 'TRACE'
     DELETE = 'DELETE'
     PUT = 'PUT'
-    TRACE = 'TRACE'
+    PATCH = 'PATCH'
 
 
 class Errors(Enum):
