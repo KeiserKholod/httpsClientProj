@@ -72,9 +72,16 @@ class Request:
         self.request_to_send = b''
         self.user_agent = args.agent
         self.referer = args.referer
-        self.cookie = args.cookie
+        self.cookie = ''
+        cookie = args.cookie
         if args.path_to_cookie != '':
             self.__get_cookie_from_file(args.path_to_cookie, args.is_json)
+        else:
+            if args.is_json:
+                self.__parse_cookie_from_json(self, cookie)
+            else:
+                self.cookie = cookie
+
         self.protocol = Protocol.HTTP
         try:
             self.request_method = RequestMethod(args.req_type.upper())
@@ -232,7 +239,7 @@ def create_cmd_parser():
     parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
     parser.add_argument('-j', '--json', action='store_true', dest="is_json",
-                        help='to take cookie from file as json')
+                        help='to take cookie from json')
     parser.add_argument('-0', action='store_true', dest="is_meta",
                         help='to write meta data of response')
     parser.add_argument('-1', action='store_true', dest="is_head",
