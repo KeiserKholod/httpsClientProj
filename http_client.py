@@ -44,7 +44,7 @@ class Response:
         begin = resp_bytes.find(b'charset=') + len('charset=')
         resp = resp_bytes[begin:]
         end = resp.find(b'\r\n')
-        self.encoding = str(resp[0:end])
+        self.encoding = str(resp[0:end], encoding='utf-8')
 
     def prepare_response(self, args):
         text = b''
