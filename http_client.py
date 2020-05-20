@@ -4,6 +4,7 @@ import argparse
 import errors
 import sys
 from enum import Enum
+from yarl import URL
 
 
 class Protocol(Enum):
@@ -58,6 +59,7 @@ class Response:
             text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
+        
     def __str__(self):
         return self.response_to_print.decode(encoding=self.encoding)
 
@@ -71,6 +73,8 @@ class Request:
         self.user_agent = args.agent
         self.referer = args.referer
         self.cookie = args.cookie
+        if args.path_to_cookie != '':
+            self.__get_cookie_from_file(args.path_to_cookie)
         self.protocol = Protocol.HTTP
         try:
             self.request_method = RequestMethod(args.req_type.upper())
@@ -80,6 +84,8 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
+        if args.path_to_body != '':
+            self.__get_data_to_send_from_file(args.path_to_body)
         self.__parse_link(args.link)
         self.__init_headers()
 
@@ -112,28 +118,39 @@ class Request:
         parts = link.split(':')
         if len(parts) < 2 or len(parts) > 3:
             raise errors.InvalidLink()
+
+    def __get_cookie_from_file(self, path):
+        file = open(path, 'r')
         try:
-            self.protocol = Protocol(parts[0].upper())
+            self.cookie = file.read()
+        except Errors:
+            pass
+        finally:
+            file.close()
+
+    def __get_data_to_send_from_file(self, path):
+        file = open(path, 'r')
+        try:
+            self.data_to_send = file.read()
+        except Errors:
+            pass
+        finally:
+            file.close()
+
+    def __parse_link(self, link):
+        url = URL(link)
+        try:
+            self.protocol = Protocol(url.scheme.upper())
         except ValueError:
             raise errors.InvalidProtocol()
 
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
-        line = parts[1][2:]
-
-        req_index = line.find('/')
-        if req_index == -1:
-            self.domain = line
-        else:
-            self.domain = line[0:req_index]
-            self.request = line[req_index:]
-        if len(parts) == 3:
-            req_index = parts[2].find('/')
-            if req_index == -1:
-                self.port = parts[2]
-            else:
-                self.port = parts[2][0:req_index]
-                self.request = parts[2][req_index:]
+        port = url.port
+        if port is not None:
+            self.port = str(port)
+        self.domain = url.host
+        self.request = url.path_qs
 
     def __prepare_request(self):
         if self.request_method == RequestMethod.GET and self.data_to_send != '':
@@ -186,13 +203,18 @@ def create_cmd_parser():
                         help='Possible: GET, POST, HEAD, OPTIONS, CONNECT, TRACE, DELETE, PUT, TRACE')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
+    parser.add_argument('--body-file', default='', dest="path_to_body",
+                        help='get body of POST request or'
+                             ' args of GET request from file ')
     parser.add_argument('-a', '--agent', default='', dest="agent",
                         help='to send user-agent')
     parser.add_argument('-r', '--ref', default='', dest="referer",
                         help='to send referer')
     parser.add_argument('-c', '--cookie', default='', dest="cookie",
                         help='to send cookie')
-    parser.add_argument('-s', '--show', action='store_true', dest="show_request",
+    parser.add_argument('--cookie-file', default='', dest="path_to_cookie",
+                        help='to send cookie from file')
+    parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
     parser.add_argument('-0', action='store_true', dest="is_meta",
                         help='to write meta data of response')

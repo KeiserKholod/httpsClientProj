@@ -88,6 +88,18 @@ class TestRequest(unittest.TestCase):
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
+    def test_cookie_file(self):
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', 'cookie.txt'])
+        request = http_client.Request(args)
+        self.assertEqual('qwer=ty', request.cookie)
+
+    def test_body_file(self):
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--body-file', 'body.txt'])
+        request = http_client.Request(args)
+        self.assertEqual('pass=word', request.data_to_send)
+
     def test_get_with_args(self):
         req = 'GET /t/xfg/post?qw=12 HTTP/1.1\r\n' \
               'Host: ptsv2.com\r\n' \
