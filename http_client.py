@@ -206,6 +206,8 @@ def create_cmd_parser():
                         help='save response in file')
     parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
                         help='to add custom headers or change already existing')
+    parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
+                        help='to write response as binary data')
     return parser
 
 
@@ -222,4 +224,7 @@ if __name__ == '__main__':
         response.prepare_response(args)
         # response.print_response(args)
         # print(response)
-        sys.stdout.write(response.__str__())
+        if not args.resp_is_bin:
+            sys.stdout.write(response.__str__())
+        else:
+            sys.stdout.buffer.write(response.response_to_print)
