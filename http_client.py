@@ -1,6 +1,8 @@
 import socket
 import ssl
 import argparse
+import errors
+import sys
 from enum import Enum
 from yarl import URL
 
@@ -10,10 +12,16 @@ class Protocol(Enum):
     HTTPS = 'HTTPS'
 
 
-class RequestType(Enum):
+class RequestMethod(Enum):
     GET = 'GET'
     POST = 'POST'
     HEAD = 'HEAD'
+    OPTIONS = 'OPTIONS'
+    CONNECT = 'CONNECT'
+    TRACE = 'TRACE'
+    DELETE = 'DELETE'
+    PUT = 'PUT'
+    PATCH = 'PATCH'
 
 
 class Errors(Enum):
@@ -22,37 +30,44 @@ class Errors(Enum):
     Prot_type = 2
 
 
-# "HEAD", "PUT","PATCH", "DELETE", "TRACE", "CONNECT", "OPTIONS"
-
 class Response:
     def __init__(self, resp_bytes):
+        self.encoding = ''
+        self.get_encoding(resp_bytes)
         self.response_to_print = b''
         border = resp_bytes.find(b'\r\n\r\n')
-        self.headers = resp_bytes[0:border + 4]
+        meta_data_border = resp_bytes.find(b'\r\n')
+        self.headers = resp_bytes[meta_data_border + 2:border + 4]
+        self.meta_data = resp_bytes[0:meta_data_border + 2]
         self.body = resp_bytes[border + 4:]
+
+    def get_encoding(self, resp_bytes):
+        begin = resp_bytes.find(b'charset=') + len('charset=')
+        resp = resp_bytes[begin:]
+        end = resp.find(b'\r\n')
+        self.encoding = str(resp[0:end], encoding='utf-8')
 
     def prepare_response(self, args):
         text = b''
+        if args.is_meta:
+            text = self.meta_data
         if args.is_head:
             text = self.headers
-        if args.is_body or not (args.is_head or args.is_all):
+        if args.is_body or not (args.is_head or args.is_all or args.is_meta):
             text = b''.join((text, self.body))
         if args.is_all:
-            text = b''.join((self.headers, self.body))
+            text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
-    def print_response(self, args):
-        if args.path_to_response != '':
-            file = open(args.path_to_response, 'wb')
-            file.write(self.response_to_print)
-            file.close()
-        else:
-            print(self.response_to_print)
+        
+    def __str__(self):
+        return self.response_to_print.decode(encoding=self.encoding)
 
 
 class Request:
     def __init__(self, args):
-        self.cont_type = 'application/x-www-form-urlencoded'
+        self.headers = dict()
+        self.custom_headers = args.custom_headers
         self.show_request = args.show_request
         self.request_to_send = b''
         self.user_agent = args.agent
@@ -62,9 +77,9 @@ class Request:
             self.__get_cookie_from_file(args.path_to_cookie)
         self.protocol = Protocol.HTTP
         try:
-            self.request_type = RequestType(args.req_type.upper())
+            self.request_method = RequestMethod(args.req_type.upper())
         except ValueError:
-            Request.__throw_error(Errors.Req_type)
+            raise errors.InvalidHTTPMethod()
         self.domain = ""
         self.port = "80"
         self.request = "/"
@@ -72,6 +87,37 @@ class Request:
         if args.path_to_body != '':
             self.__get_data_to_send_from_file(args.path_to_body)
         self.__parse_link(args.link)
+        self.__init_headers()
+
+    def __parse_custom_headers(self):
+        if not (self.custom_headers is None):
+            for header in self.custom_headers:
+                separator_ind = header.find(':')
+                key = header[0:separator_ind]
+                value = header[separator_ind + 1:].strip()
+                self.headers[key] = value
+
+    def __init_headers(self):
+        self.headers['Host'] = self.domain
+        self.headers['Connection'] = 'close'
+        if self.user_agent != '':
+            self.headers['User-Agent'] = self.user_agent
+        if self.referer != '':
+            self.headers['Referer'] = self.referer
+        if self.cookie != '':
+            self.headers['Cookie'] = self.cookie
+        if self.request_method == RequestMethod.POST or \
+                self.request_method == RequestMethod.DELETE or \
+                self.request_method == RequestMethod.PUT or \
+                self.request_method == RequestMethod.PATCH:
+            self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+            self.headers['Content-Length'] = str(len(self.data_to_send))
+        self.__parse_custom_headers()
+
+    def __parse_link(self, link):
+        parts = link.split(':')
+        if len(parts) < 2 or len(parts) > 3:
+            raise errors.InvalidLink()
 
     def __get_cookie_from_file(self, path):
         file = open(path, 'r')
@@ -91,27 +137,13 @@ class Request:
         finally:
             file.close()
 
-    @staticmethod
-    def __throw_error(type):
-        if type == Errors.Link:
-            raise ValueError("ERROR: Invalid link")
-            # print("ERROR: Invalid link")
-            # exit(-1)
-        if type == Errors.Req_type:
-            raise ValueError("Invalid request type")
-            # print("ERROR: Invalid request type")
-            # exit(-1)
-        if type == Errors.Prot_type:
-            raise ValueError("Invalid protocol")
-            # print("ERROR: Invalid protocol")
-            # exit(-1)
-
     def __parse_link(self, link):
         url = URL(link)
         try:
             self.protocol = Protocol(url.scheme.upper())
         except ValueError:
-            Request.__throw_error(Errors.Prot_type)
+            raise errors.InvalidProtocol()
+
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
         port = url.port
@@ -121,30 +153,20 @@ class Request:
         self.request = url.path_qs
 
     def __prepare_request(self):
-        if self.request_type == RequestType.GET and self.data_to_send != '':
+        if self.request_method == RequestMethod.GET and self.data_to_send != '':
             self.request = ''.join((self.request, '?', self.data_to_send))
         request = ''.join((
-            self.request_type.value, ' ', self.request, ' HTTP/1.1\r\n',
-            'Host: ', self.domain, '\r\n',
-            'Connection: close\r\n'))
-        if self.user_agent != '':
-            request = ''.join((request,
-                               'User-Agent: ', self.user_agent, '\r\n'))
-        if self.referer != '':
-            request = ''.join((request,
-                               'Referer: ', self.referer, '\r\n'))
-        if self.cookie != '':
-            request = ''.join((request,
-                               'Cookie: ', self.cookie, '\r\n'))
-        if self.request_type == RequestType.GET or \
-                self.request_type == RequestType.HEAD:
-            request = ''.join((request, '\r\n'))
-        if self.request_type == RequestType.POST:
+            self.request_method.value, ' ', self.request, ' HTTP/1.1\r\n'))
+        for key in self.headers.keys():
+            request = ''.join((request, key, ': ', self.headers[key], '\r\n'))
+
+        request = ''.join((request, '\r\n'))
+        if self.request_method == RequestMethod.POST or \
+                self.request_method == RequestMethod.DELETE or \
+                self.request_method == RequestMethod.PUT or \
+                self.request_method == RequestMethod.PATCH:
             request = ''.join((
-                request,
-                'Content-Type: ', self.cont_type, '\r\n',
-                'Content-Length: ', str(len(self.data_to_send)),
-                '\r\n\r\n' + self.data_to_send))
+                request, self.data_to_send))
         self.request_to_send = request
         if self.show_request != 0:
             print(request)
@@ -178,7 +200,7 @@ def create_cmd_parser():
     parser.add_argument('link', default=[''],
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
-                        help='Possible: GET, POST, HEAD')
+                        help='Possible: GET, POST, HEAD, OPTIONS, CONNECT, TRACE, DELETE, PUT, TRACE')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
     parser.add_argument('--body-file', default='', dest="path_to_body",
@@ -194,22 +216,37 @@ def create_cmd_parser():
                         help='to send cookie from file')
     parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
-    parser.add_argument('-0', action='store_true', dest="is_head",
+    parser.add_argument('-0', action='store_true', dest="is_meta",
+                        help='to write meta data of response')
+    parser.add_argument('-1', action='store_true', dest="is_head",
                         help='to write head of response')
-    parser.add_argument('-1', action='store_true', dest="is_body",
+    parser.add_argument('-2', action='store_true', dest="is_body",
                         help='to write body of response')
-    parser.add_argument('-2', '--all', action='store_true', dest="is_all",
+    parser.add_argument('-3', '--all', action='store_true', dest="is_all",
                         help='to write all response')
     parser.add_argument('-f', '--file', default='', dest="path_to_response",
                         help='save response in file')
+    parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
+                        help='to add custom headers or change already existing')
+    parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
+                        help='to write response as binary data')
     return parser
 
 
 if __name__ == '__main__':
     cmd_parser = create_cmd_parser()
     args = cmd_parser.parse_args()
-    print(args)
-    request = Request(args)
-    response = request.do_request()
-    response.prepare_response(args)
-    response.print_response(args)
+    try:
+        request = Request(args)
+    except errors.HTTPSClientError as e:
+        print(e.message)
+        exit(-1)
+    else:
+        response = request.do_request()
+        response.prepare_response(args)
+        # response.print_response(args)
+        # print(response)
+        if not args.resp_is_bin:
+            sys.stdout.write(response.__str__())
+        else:
+            sys.stdout.buffer.write(response.response_to_print)
