@@ -40,7 +40,7 @@ class TestRequest(unittest.TestCase):
     def test_wrong_link(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['httpqweq'])
-        with self.assertRaises(errors.InvalidLink):
+        with self.assertRaises(errors.HTTPSClientError):
             request = http_client.Request(args)
 
     def test_wrong_req_type(self):
