@@ -2,6 +2,7 @@ import socket
 import ssl
 import argparse
 import errors
+import sys
 from enum import Enum
 
 
@@ -30,12 +31,20 @@ class Errors(Enum):
 
 class Response:
     def __init__(self, resp_bytes):
+        self.encoding = ''
+        self.get_encoding(resp_bytes)
         self.response_to_print = b''
         border = resp_bytes.find(b'\r\n\r\n')
         meta_data_border = resp_bytes.find(b'\r\n')
         self.headers = resp_bytes[meta_data_border + 2:border + 4]
         self.meta_data = resp_bytes[0:meta_data_border + 2]
         self.body = resp_bytes[border + 4:]
+
+    def get_encoding(self, resp_bytes):
+        begin = resp_bytes.find(b'charset=') + len('charset=')
+        resp = resp_bytes[begin:]
+        end = resp.find(b'\r\n')
+        self.encoding = str(resp[0:end])
 
     def prepare_response(self, args):
         text = b''
@@ -49,12 +58,8 @@ class Response:
             text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
-    def print_response(self, args):
-        if args.path_to_response != '':
-            file = open(args.path_to_response, 'wb')
-            file.write(self.response_to_print)
-        else:
-            print(self.response_to_print)
+    def __str__(self):
+        return self.response_to_print.decode(encoding=self.encoding)
 
 
 class Request:
@@ -215,4 +220,5 @@ if __name__ == '__main__':
     else:
         response = request.do_request()
         response.prepare_response(args)
-        response.print_response(args)
+        # response.print_response(args)
+        print(response)
