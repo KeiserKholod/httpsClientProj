@@ -1,6 +1,7 @@
 import socket
 import ssl
 import argparse
+import errors
 from enum import Enum
 
 
@@ -33,7 +34,7 @@ class Response:
         border = resp_bytes.find(b'\r\n\r\n')
         meta_data_border = resp_bytes.find(b'\r\n')
         self.headers = resp_bytes[meta_data_border + 2:border + 4]
-        self.meta_data = resp_bytes[0:meta_data_border]
+        self.meta_data = resp_bytes[0:meta_data_border + 2]
         self.body = resp_bytes[border + 4:]
 
     def prepare_response(self, args):
@@ -69,28 +70,13 @@ class Request:
         try:
             self.request_method = RequestMethod(args.req_type.upper())
         except ValueError:
-            Request.__throw_error(Errors.Req_type)
+            raise errors.InvalidHTTPMethod()
         self.domain = ""
         self.port = "80"
         self.request = "/"
         self.data_to_send = args.body
         self.__parse_link(args.link)
         self.__init_headers()
-
-    @staticmethod
-    def __throw_error(type):
-        if type == Errors.Link:
-            raise ValueError("ERROR: Invalid link")
-            # print("ERROR: Invalid link")
-            # exit(-1)
-        if type == Errors.Req_type:
-            raise ValueError("Invalid request type")
-            # print("ERROR: Invalid request type")
-            # exit(-1)
-        if type == Errors.Prot_type:
-            raise ValueError("Invalid protocol")
-            # print("ERROR: Invalid protocol")
-            # exit(-1)
 
     def __parse_custom_headers(self):
         if not (self.custom_headers is None):
@@ -109,9 +95,9 @@ class Request:
             self.headers['Referer'] = self.referer
         if self.cookie != '':
             self.headers['Cookie'] = self.cookie
-        if self.request_method == RequestMethod.POST or\
-                self.request_method == RequestMethod.DELETE or\
-                self.request_method == RequestMethod.PUT or\
+        if self.request_method == RequestMethod.POST or \
+                self.request_method == RequestMethod.DELETE or \
+                self.request_method == RequestMethod.PUT or \
                 self.request_method == RequestMethod.PATCH:
             self.headers['Content-Type'] = 'application/x-www-form-urlencoded'
             self.headers['Content-Length'] = str(len(self.data_to_send))
@@ -120,11 +106,12 @@ class Request:
     def __parse_link(self, link):
         parts = link.split(':')
         if len(parts) < 2 or len(parts) > 3:
-            Request.__throw_error(Errors.Link)
+            raise errors.InvalidLink()
         try:
             self.protocol = Protocol(parts[0].upper())
         except ValueError:
-            Request.__throw_error(Errors.Prot_type)
+            raise errors.InvalidProtocol()
+
         if self.protocol == Protocol.HTTPS:
             self.port = "443"
         line = parts[1][2:]
@@ -152,9 +139,9 @@ class Request:
             request = ''.join((request, key, ': ', self.headers[key], '\r\n'))
 
         request = ''.join((request, '\r\n'))
-        if self.request_method == RequestMethod.POST or\
-                self.request_method == RequestMethod.DELETE or\
-                self.request_method == RequestMethod.PUT or\
+        if self.request_method == RequestMethod.POST or \
+                self.request_method == RequestMethod.DELETE or \
+                self.request_method == RequestMethod.PUT or \
                 self.request_method == RequestMethod.PATCH:
             request = ''.join((
                 request, self.data_to_send))
@@ -220,8 +207,12 @@ def create_cmd_parser():
 if __name__ == '__main__':
     cmd_parser = create_cmd_parser()
     args = cmd_parser.parse_args()
-    print(args)
-    request = Request(args)
-    response = request.do_request()
-    response.prepare_response(args)
-    response.print_response(args)
+    try:
+        request = Request(args)
+    except errors.HTTPSClientError as e:
+        print(e.message)
+        exit(-1)
+    else:
+        response = request.do_request()
+        response.prepare_response(args)
+        response.print_response(args)
