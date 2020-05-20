@@ -5,6 +5,7 @@ import errors
 import sys
 from enum import Enum
 from yarl import URL
+import json
 
 
 class Protocol(Enum):
@@ -59,7 +60,6 @@ class Response:
             text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
-        
     def __str__(self):
         return self.response_to_print.decode(encoding=self.encoding)
 
@@ -74,7 +74,7 @@ class Request:
         self.referer = args.referer
         self.cookie = args.cookie
         if args.path_to_cookie != '':
-            self.__get_cookie_from_file(args.path_to_cookie)
+            self.__get_cookie_from_file(args.path_to_cookie, args.is_json)
         self.protocol = Protocol.HTTP
         try:
             self.request_method = RequestMethod(args.req_type.upper())
@@ -119,14 +119,29 @@ class Request:
         if len(parts) < 2 or len(parts) > 3:
             raise errors.InvalidLink()
 
-    def __get_cookie_from_file(self, path):
+    def __get_cookie_from_file(self, path, is_json):
         file = open(path, 'r')
+        cookie = ''
         try:
-            self.cookie = file.read()
+            cookie = file.read()
         except Errors:
             pass
         finally:
             file.close()
+            if is_json:
+                self.__parse_cookie_from_json(cookie)
+            else:
+                self.cookie = cookie
+
+    def __parse_cookie_from_json(self, cookie):
+        cookie_dict = json.loads(cookie)
+        for key in cookie_dict:
+            self.cookie = ';'.join((
+                self.cookie,
+                '='.join((
+                    key,
+                    cookie_dict[key]))))
+        self.cookie = self.cookie[1:] + ';'
 
     def __get_data_to_send_from_file(self, path):
         file = open(path, 'r')
@@ -216,6 +231,8 @@ def create_cmd_parser():
                         help='to send cookie from file')
     parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
+    parser.add_argument('-j', '--json', action='store_true', dest="is_json",
+                        help='to take cookie from file as json')
     parser.add_argument('-0', action='store_true', dest="is_meta",
                         help='to write meta data of response')
     parser.add_argument('-1', action='store_true', dest="is_head",
