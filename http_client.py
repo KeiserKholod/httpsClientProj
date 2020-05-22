@@ -24,12 +24,6 @@ class RequestMethod(Enum):
     PATCH = 'PATCH'
 
 
-class Errors(Enum):
-    Link = 0
-    Req_type = 1
-    Prot_type = 2
-
-
 class Response:
     def __init__(self, resp_bytes):
         self.encoding = ''
@@ -59,7 +53,6 @@ class Response:
             text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
-        
     def __str__(self):
         return self.response_to_print.decode(encoding=self.encoding)
 
@@ -244,8 +237,6 @@ if __name__ == '__main__':
     else:
         response = request.do_request()
         response.prepare_response(args)
-        # response.print_response(args)
-        # print(response)
         if not args.resp_is_bin:
             sys.stdout.write(response.__str__())
         else:
