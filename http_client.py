@@ -221,8 +221,6 @@ def create_cmd_parser():
                         help='to write body of response')
     parser.add_argument('-3', '--all', action='store_true', dest="is_all",
                         help='to write all response')
-    parser.add_argument('-f', '--file', default='', dest="path_to_response",
-                        help='save response in file')
     parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
                         help='to add custom headers or change already existing')
     parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
