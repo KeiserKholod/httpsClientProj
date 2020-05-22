@@ -116,7 +116,7 @@ class Request:
         file = open(path, 'r')
         try:
             self.cookie = file.read()
-        except Errors:
+        except Exception:
             pass
         finally:
             file.close()
@@ -125,7 +125,7 @@ class Request:
         file = open(path, 'r')
         try:
             self.data_to_send = file.read()
-        except Errors:
+        except Exception:
             pass
         finally:
             file.close()
@@ -166,26 +166,30 @@ class Request:
         return request
 
     def do_request(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.domain, int(self.port)))
-        request_to_send = self.__prepare_request()
-        if self.protocol == Protocol.HTTPS:
-            sock = ssl.wrap_socket(sock,
-                                   keyfile=None,
-                                   certfile=None,
-                                   server_side=False,
-                                   cert_reqs=ssl.CERT_NONE,
-                                   ssl_version=ssl.PROTOCOL_SSLv23)
-        sock.sendall(request_to_send.encode())
-        all_response = b''
-        while True:
-            response_bytes = sock.recv(1024)
-            all_response = b''.join((all_response, response_bytes))
-            if not response_bytes:
-                break
-        sock.close()
-        response = Response(all_response)
-        return response
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.domain, int(self.port)))
+            request_to_send = self.__prepare_request()
+            if self.protocol == Protocol.HTTPS:
+                sock = ssl.wrap_socket(sock,
+                                       keyfile=None,
+                                       certfile=None,
+                                       server_side=False,
+                                       cert_reqs=ssl.CERT_NONE,
+                                       ssl_version=ssl.PROTOCOL_SSLv23)
+            sock.sendall(request_to_send.encode())
+            all_response = b''
+            while True:
+                response_bytes = sock.recv(1024)
+                all_response = b''.join((all_response, response_bytes))
+                if not response_bytes:
+                    break
+            sock.close()
+            response = Response(all_response)
+        except Exception:
+            raise errors.ConnectionError
+        else:
+            return response
 
 
 def create_cmd_parser():
@@ -231,13 +235,13 @@ if __name__ == '__main__':
     args = cmd_parser.parse_args()
     try:
         request = Request(args)
-    except errors.HTTPSClientError as e:
-        print(e.message)
-        exit(-1)
-    else:
         response = request.do_request()
         response.prepare_response(args)
         if not args.resp_is_bin:
             sys.stdout.write(response.__str__())
         else:
             sys.stdout.buffer.write(response.response_to_print)
+    except errors.HTTPSClientError as e:
+        print(e.message)
+        exit(-1)
+

@@ -12,3 +12,7 @@ class InvalidHTTPMethod(HTTPSClientError):
 
 class InvalidProtocol(HTTPSClientError):
     message = "Error: Invalid protocol"
+
+
+class ConnectionError(HTTPSClientError):
+    message = "Error: Connection error"
