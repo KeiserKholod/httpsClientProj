@@ -1,5 +1,3 @@
-import argparse
-import sys
 from HTTPSClient import client
 from HTTPSClient import errors
 
@@ -25,6 +23,8 @@ def create_cmd_parser():
                         help='to send cookie from file')
     parser.add_argument('-v', '--verbose', action='store_true', dest="show_request",
                         help='to show request')
+    parser.add_argument('-j', '--json', action='store_true', dest="is_json",
+                        help='to take cookie from json')
     parser.add_argument('-0', action='store_true', dest="is_meta",
                         help='to write meta data of response')
     parser.add_argument('-1', action='store_true', dest="is_head",
