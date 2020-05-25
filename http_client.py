@@ -3,6 +3,7 @@ from HTTPSClient import errors
 import argparse
 import sys
 
+
 def create_cmd_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('link', default=[''],

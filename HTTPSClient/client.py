@@ -125,13 +125,10 @@ class Request:
 
     def __parse_cookie_from_json(self, cookie):
         cookie_dict = json.loads(cookie)
+        cookies = []
         for key in cookie_dict:
-            self.cookie = ';'.join((
-                self.cookie,
-                '='.join((
-                    key,
-                    cookie_dict[key]))))
-        self.cookie = self.cookie[1:] + ';'
+            cookies.append('{}={};'.format(key, cookie_dict[key]))
+        self.cookie = ''.join(cookies)
 
     def __get_data_to_send_from_file(self, path):
         with open(path, 'r') as file:
@@ -153,23 +150,25 @@ class Request:
         self.request = url.path_qs
 
     def __prepare_request(self):
+        request = []
         if self.request_method == RequestMethod.GET and self.data_to_send != '':
             self.request = ''.join((self.request, '?', self.data_to_send))
-        request = ''.join((
-            self.request_method.value, ' ', self.request, ' HTTP/1.1\r\n'))
+        request.append('{} {} {}'.format(self.request_method.value, self.request, 'HTTP/1.1'))
         for key in self.headers.keys():
-            request = ''.join((request, key, ': ', self.headers[key], '\r\n'))
+            request.append('{}: {}'.format(key, self.headers[key]))
+        request.append('')
+        request.append('')
 
-        request = ''.join((request, '\r\n'))
         if self.request_method == RequestMethod.POST or \
                 self.request_method == RequestMethod.DELETE or \
                 self.request_method == RequestMethod.PUT or \
                 self.request_method == RequestMethod.PATCH:
-            request = ''.join((
-                request, self.data_to_send))
+            request.pop()
+            request.append(self.data_to_send)
+        request = '\r\n'.join(request)
         self.request_to_send = request
         if self.show_request != 0:
-            print(request)
+            print(request.encode() + b'')
         return request
 
     def do_request(self):
@@ -185,14 +184,14 @@ class Request:
                                        cert_reqs=ssl.CERT_NONE,
                                        ssl_version=ssl.PROTOCOL_SSLv23)
             sock.sendall(request_to_send.encode())
-            all_response = b''
+            all_response = []
             while True:
                 response_bytes = sock.recv(1024)
-                all_response = b''.join((all_response, response_bytes))
+                all_response.append(response_bytes)
                 if not response_bytes:
                     break
             sock.close()
-            response = Response(all_response)
+            response = Response(b''.join(all_response))
         except Exception:
             raise errors.ConnectionError
         else:
