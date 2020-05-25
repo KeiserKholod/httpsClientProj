@@ -1,15 +1,16 @@
 import unittest
-import errors
 import http_client
+from HTTPSClient import client
+from HTTPSClient import errors
 
 
 class TestRequest(unittest.TestCase):
     def test_request_get_http(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-t', 'get'])
-        request = http_client.Request(args)
-        self.assertEqual(request.request_method, http_client.RequestMethod.GET)
-        self.assertEqual(request.protocol, http_client.Protocol.HTTP)
+        request = client.Request(args)
+        self.assertEqual(request.request_method, client.RequestMethod.GET)
+        self.assertEqual(request.protocol, client.Protocol.HTTP)
         self.assertEqual(request.request, '/t/xfg/post')
         self.assertEqual(request.domain, 'ptsv2.com')
         self.assertEqual(request.port, '80')
@@ -18,9 +19,9 @@ class TestRequest(unittest.TestCase):
     def test_request_post_http(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-t', 'post'])
-        request = http_client.Request(args)
-        self.assertEqual(request.request_method, http_client.RequestMethod.POST)
-        self.assertEqual(request.protocol, http_client.Protocol.HTTP)
+        request = client.Request(args)
+        self.assertEqual(request.request_method, client.RequestMethod.POST)
+        self.assertEqual(request.protocol, client.Protocol.HTTP)
         self.assertEqual(request.request, '/t/xfg/post')
         self.assertEqual(request.domain, 'ptsv2.com')
         self.assertEqual(request.port, '80')
@@ -29,9 +30,9 @@ class TestRequest(unittest.TestCase):
     def test_custom_request_https(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-t', 'post', '-d', 'data=0123'])
-        request = http_client.Request(args)
-        self.assertEqual(request.request_method, http_client.RequestMethod.POST)
-        self.assertEqual(request.protocol, http_client.Protocol.HTTPS)
+        request = client.Request(args)
+        self.assertEqual(request.request_method, client.RequestMethod.POST)
+        self.assertEqual(request.protocol, client.Protocol.HTTPS)
         self.assertEqual(request.request, '/request')
         self.assertEqual(request.domain, 'abc.de')
         self.assertEqual(request.port, '123')
@@ -41,19 +42,19 @@ class TestRequest(unittest.TestCase):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['httpqweq'])
         with self.assertRaises(errors.HTTPSClientError):
-            request = http_client.Request(args)
+            request = client.Request(args)
 
     def test_wrong_req_type(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-t', 'qwer'])
         with self.assertRaises(errors.InvalidHTTPMethod):
-            request = http_client.Request(args)
+            request = client.Request(args)
 
     def test_wrong_protocol(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['qwerty://abc.de:123/request'])
         with self.assertRaises(errors.InvalidProtocol):
-            request = http_client.Request(args)
+            request = client.Request(args)
 
     def test_user_agent(self):
         req = 'GET /t/xfg/post HTTP/1.1\r\n' \
@@ -62,7 +63,7 @@ class TestRequest(unittest.TestCase):
               'User-Agent: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-a', 'qwerty'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -73,7 +74,7 @@ class TestRequest(unittest.TestCase):
               'Referer: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-r', 'qwerty'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -84,20 +85,20 @@ class TestRequest(unittest.TestCase):
               'Cookie: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-c', 'qwerty'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
     def test_cookie_file(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', 'cookie.txt'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         self.assertEqual('qwer=ty', request.cookie)
 
     def test_body_file(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--body-file', 'body.txt'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         self.assertEqual('pass=word', request.data_to_send)
 
     def test_get_with_args(self):
@@ -106,7 +107,7 @@ class TestRequest(unittest.TestCase):
               'Connection: close\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-d', 'qw=12'])
-        request = http_client.Request(args)
+        request = client.Request(args)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -124,7 +125,7 @@ class TestResponse(unittest.TestCase):
 
     def test_init_resp(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
-        resp = http_client.Response(resp_txt)
+        resp = client.Response(resp_txt)
         self.assertEqual(TestResponse.headers, resp.headers)
         self.assertEqual(TestResponse.body, resp.body)
 
@@ -132,7 +133,7 @@ class TestResponse(unittest.TestCase):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-1'])
-        resp = http_client.Response(resp_txt)
+        resp = client.Response(resp_txt)
         resp.prepare_response(args)
         self.assertEqual(resp.response_to_print, TestResponse.headers)
 
@@ -140,7 +141,7 @@ class TestResponse(unittest.TestCase):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-2'])
-        resp = http_client.Response(resp_txt)
+        resp = client.Response(resp_txt)
         resp.prepare_response(args)
         self.assertEqual(resp.response_to_print, TestResponse.body)
 
@@ -148,7 +149,7 @@ class TestResponse(unittest.TestCase):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-3'])
-        resp = http_client.Response(resp_txt)
+        resp = client.Response(resp_txt)
         resp.prepare_response(args)
         self.assertEqual(resp.response_to_print, resp_txt)
 
