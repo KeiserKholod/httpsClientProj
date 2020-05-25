@@ -114,20 +114,10 @@ class Request:
             self.headers['Content-Length'] = str(len(self.data_to_send))
         self.__parse_custom_headers()
 
-    def __parse_link(self, link):
-        parts = link.split(':')
-        if len(parts) < 2 or len(parts) > 3:
-            raise errors.InvalidLink()
-
     def __get_cookie_from_file(self, path, is_json):
-        file = open(path, 'r')
         cookie = ''
-        try:
+        with open(path, 'r') as file:
             cookie = file.read()
-        except Errors:
-            pass
-        finally:
-            file.close()
             if is_json:
                 self.__parse_cookie_from_json(cookie)
             else:
@@ -144,13 +134,8 @@ class Request:
         self.cookie = self.cookie[1:] + ';'
 
     def __get_data_to_send_from_file(self, path):
-        file = open(path, 'r')
-        try:
+        with open(path, 'r') as file:
             self.data_to_send = file.read()
-        except Exception:
-            pass
-        finally:
-            file.close()
 
     def __parse_link(self, link):
         url = URL(link)
