@@ -40,15 +40,15 @@ class Response:
         end = resp.find(b'\r\n')
         self.encoding = str(resp[0:end], encoding='utf-8')
 
-    def prepare_response(self, args):
+    def prepare_response(self, is_meta, is_head, is_body, is_all):
         text = b''
-        if args.is_meta:
+        if is_meta:
             text = self.meta_data
-        if args.is_head:
+        if is_head:
             text = self.headers
-        if args.is_body or not (args.is_head or args.is_all or args.is_meta):
+        if is_body or not (is_head or is_all or is_meta):
             text = b''.join((text, self.body))
-        if args.is_all:
+        if is_all:
             text = b''.join((self.meta_data, self.headers, self.body))
         self.response_to_print = text
 
@@ -57,36 +57,46 @@ class Response:
 
 
 class Request:
-    def __init__(self, args):
+    def __init__(self,
+                 custom_headers,
+                 show_request,
+                 agent,
+                 referer,
+                 cookie,
+                 path_to_cookie,
+                 is_json,
+                 req_type,
+                 body,
+                 path_to_body,
+                 link):
         self.headers = dict()
-        self.custom_headers = args.custom_headers
-        self.show_request = args.show_request
+        self.custom_headers = custom_headers
+        self.show_request = show_request
         self.request_to_send = b''
-        self.user_agent = args.agent
-        self.referer = args.referer
-        self.cookie = args.cookie
-        self.cookie = args.cookie
+        self.user_agent = agent
+        self.referer = referer
+        self.cookie = cookie
         self.cookie = ''
-        cookie = args.cookie
-        if args.path_to_cookie != '':
-            self.__get_cookie_from_file(args.path_to_cookie, args.is_json)
+        cookie = cookie
+        if path_to_cookie != '':
+            self.__get_cookie_from_file(path_to_cookie, is_json)
         else:
-            if args.is_json:
+            if is_json:
                 self.__parse_cookie_from_json(self, cookie)
             else:
                 self.cookie = cookie
         self.protocol = Protocol.HTTP
         try:
-            self.request_method = RequestMethod(args.req_type.upper())
+            self.request_method = RequestMethod(req_type.upper())
         except ValueError:
             raise errors.InvalidHTTPMethod()
         self.domain = ""
         self.port = "80"
         self.request = "/"
-        self.data_to_send = args.body
-        if args.path_to_body != '':
-            self.__get_data_to_send_from_file(args.path_to_body)
-        self.__parse_link(args.link)
+        self.data_to_send = body
+        if path_to_body != '':
+            self.__get_data_to_send_from_file(path_to_body)
+        self.__parse_link(link)
         self.__init_headers()
 
     def __parse_custom_headers(self):
