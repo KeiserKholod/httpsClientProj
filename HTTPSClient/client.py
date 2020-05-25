@@ -1,5 +1,6 @@
 import socket
 import ssl
+import json
 from HTTPSClient import errors
 from enum import Enum
 from yarl import URL
@@ -64,8 +65,16 @@ class Request:
         self.user_agent = args.agent
         self.referer = args.referer
         self.cookie = args.cookie
+        self.cookie = args.cookie
+        self.cookie = ''
+        cookie = args.cookie
         if args.path_to_cookie != '':
-            self.__get_cookie_from_file(args.path_to_cookie)
+            self.__get_cookie_from_file(args.path_to_cookie, args.is_json)
+        else:
+            if args.is_json:
+                self.__parse_cookie_from_json(self, cookie)
+            else:
+                self.cookie = cookie
         self.protocol = Protocol.HTTP
         try:
             self.request_method = RequestMethod(args.req_type.upper())
@@ -110,14 +119,29 @@ class Request:
         if len(parts) < 2 or len(parts) > 3:
             raise errors.InvalidLink()
 
-    def __get_cookie_from_file(self, path):
+    def __get_cookie_from_file(self, path, is_json):
         file = open(path, 'r')
+        cookie = ''
         try:
-            self.cookie = file.read()
-        except Exception:
+            cookie = file.read()
+        except Errors:
             pass
         finally:
             file.close()
+            if is_json:
+                self.__parse_cookie_from_json(cookie)
+            else:
+                self.cookie = cookie
+
+    def __parse_cookie_from_json(self, cookie):
+        cookie_dict = json.loads(cookie)
+        for key in cookie_dict:
+            self.cookie = ';'.join((
+                self.cookie,
+                '='.join((
+                    key,
+                    cookie_dict[key]))))
+        self.cookie = self.cookie[1:] + ';'
 
     def __get_data_to_send_from_file(self, path):
         file = open(path, 'r')

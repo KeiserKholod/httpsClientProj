@@ -2,6 +2,8 @@ import unittest
 import http_client
 from HTTPSClient import client
 from HTTPSClient import errors
+import tempfile
+import os
 
 
 class TestRequest(unittest.TestCase):
@@ -90,16 +92,31 @@ class TestRequest(unittest.TestCase):
         self.assertEqual(req, request.request_to_send)
 
     def test_cookie_file(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as file:
+            file.write('qwer=ty')
         cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', 'cookie.txt'])
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', file.name])
         request = client.Request(args)
         self.assertEqual('qwer=ty', request.cookie)
+        os.unlink(file.name)
+
+    def test_cookie_json_file(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as file:
+            file.write('{"a": "b", "c": "d", "e": "f"}')
+        cmd_parser = http_client.create_cmd_parser()
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', file.name, '-j'])
+        request = client.Request(args)
+        self.assertEqual('a=b;c=d;e=f;', request.cookie)
+        os.unlink(file.name)
 
     def test_body_file(self):
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as file:
+            file.write('pass=word')
         cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--body-file', 'body.txt'])
+        args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--body-file', file.name])
         request = client.Request(args)
         self.assertEqual('pass=word', request.data_to_send)
+        os.unlink(file.name)
 
     def test_get_with_args(self):
         req = 'GET /t/xfg/post?qw=12 HTTP/1.1\r\n' \
