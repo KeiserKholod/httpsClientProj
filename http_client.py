@@ -35,6 +35,10 @@ def create_cmd_parser():
                         help='to write body of response')
     parser.add_argument('-3', '--all', action='store_true', dest="is_all",
                         help='to write all response')
+    parser.add_argument('-4', '--сode', action='store_true', dest="is_code",
+                        help='to write code of response')
+    parser.add_argument('-5', '--cm', action='store_true', dest="is_code_and_message",
+                        help='to write code and message response')
     parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
                         help='to add custom headers or change already existing')
     parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
@@ -49,7 +53,8 @@ if __name__ == '__main__':
         request = req.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         response = request.do_request()
-        response.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all)
+        response.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all, args.is_code,
+                                  args.is_code_and_message)
         if not args.resp_is_bin:
             sys.stdout.write(response.__str__())
         else:
