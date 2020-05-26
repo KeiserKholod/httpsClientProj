@@ -60,7 +60,7 @@ class Request:
             raise errors.InvalidHTTPMethod()
         self.domain = ""
         self.port = 80
-        self.request = "/"
+        self.path = "/"
         self.data_to_send = body
         if path_to_body is not None:
             self.__get_data_to_send_from_file(path_to_body)
@@ -125,14 +125,14 @@ class Request:
         if port is not None:
             self.port = int(port)
         self.domain = url.host
-        self.request = url.path_qs
+        self.path = url.path_qs
 
     def __prepare_request(self):
         request = []
         if self.request_method == RequestMethod.GET and self.data_to_send != '':
             self.__remove_args()
-            self.request = ''.join((self.request, '?', self.data_to_send))
-        request.append('{} {} {}'.format(self.request_method.value, self.request, 'HTTP/1.1'))
+            self.path = ''.join((self.path, '?', self.data_to_send))
+        request.append('{} {} {}'.format(self.request_method.value, self.path, 'HTTP/1.1'))
         for key in self.headers.keys():
             request.append('{}: {}'.format(key, self.headers[key]))
         request.append('')
@@ -151,9 +151,9 @@ class Request:
         return request
 
     def __remove_args(self):
-        separator_ind = self.request.find('?')
+        separator_ind = self.path.find('?')
         if not separator_ind == -1:
-            self.request = self.request[0:separator_ind]
+            self.path = self.path[0:separator_ind]
 
     def do_request(self):
         try:
