@@ -30,7 +30,7 @@ class Response:
     def prepare_response(self,
                          is_meta=False,
                          is_head=False,
-                         is_body=False,
+                         is_body=True,
                          is_all=False,
                          is_code=False,
                          is_code_and_message=False):
