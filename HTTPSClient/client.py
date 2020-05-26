@@ -35,7 +35,12 @@ class Response:
         self.body = resp_bytes[border + 4:]
 
     def get_encoding(self, resp_bytes):
-        begin = resp_bytes.find(b'charset=') + len('charset=')
+        begin = resp_bytes.find(b'charset=')
+        if not begin == -1:
+            begin += len('charset=')
+        else:
+            self.encoding = 'utf-8'
+            return 0
         resp = resp_bytes[begin:]
         end = resp.find(b'\r\n')
         self.encoding = str(resp[0:end], encoding='utf-8')
@@ -202,7 +207,7 @@ class Request:
                     break
             sock.close()
             response = Response(b''.join(all_response))
-        except Exception:
+        except ValueError:
             raise errors.ConnectionError
         else:
             return response
