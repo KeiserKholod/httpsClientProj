@@ -20,7 +20,11 @@ class Response:
         end = resp.find(b'\r\n')
         self.encoding = str(resp[0:end], encoding='utf-8')
 
-    def prepare_response(self, is_meta, is_head, is_body, is_all):
+    def prepare_response(self,
+                         is_meta=False,
+                         is_head=False,
+                         is_body=False,
+                         is_all=False):
         text = b''
         if is_meta:
             text = self.meta_data

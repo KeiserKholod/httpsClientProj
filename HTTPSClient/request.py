@@ -26,17 +26,17 @@ class RequestMethod(Enum):
 
 class Request:
     def __init__(self,
-                 custom_headers,
-                 show_request,
-                 agent,
-                 referer,
-                 cookie,
-                 path_to_cookie,
-                 is_json,
-                 req_type,
-                 body,
-                 path_to_body,
-                 link):
+                 link,
+                 custom_headers=None,
+                 show_request=False,
+                 agent=None,
+                 referer=None,
+                 cookie=None,
+                 path_to_cookie=None,
+                 is_json=False,
+                 req_type='GET',
+                 body='',
+                 path_to_body=None):
         self.headers = dict()
         self.custom_headers = custom_headers
         self.show_request = show_request
@@ -46,7 +46,7 @@ class Request:
         self.cookie = cookie
         self.cookie = ''
         cookie = cookie
-        if path_to_cookie != '':
+        if path_to_cookie is not None:
             self.__get_cookie_from_file(path_to_cookie, is_json)
         else:
             if is_json:
@@ -62,7 +62,7 @@ class Request:
         self.port = "80"
         self.request = "/"
         self.data_to_send = body
-        if path_to_body != '':
+        if path_to_body is not None:
             self.__get_data_to_send_from_file(path_to_body)
         self.__parse_link(link)
         self.__init_headers()
@@ -78,11 +78,11 @@ class Request:
     def __init_headers(self):
         self.headers['Host'] = self.domain
         self.headers['Connection'] = 'close'
-        if self.user_agent != '':
+        if self.user_agent is not None:
             self.headers['User-Agent'] = self.user_agent
-        if self.referer != '':
+        if self.referer is not None:
             self.headers['Referer'] = self.referer
-        if self.cookie != '':
+        if self.cookie is not None:
             self.headers['Cookie'] = self.cookie
         if self.request_method == RequestMethod.POST or \
                 self.request_method == RequestMethod.DELETE or \

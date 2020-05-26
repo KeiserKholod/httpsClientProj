@@ -11,9 +11,8 @@ class TestRequest(unittest.TestCase):
     def test_request_get_http(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-t', 'get'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual(request.request_method, reqf.RequestMethod.GET)
         self.assertEqual(request.protocol, reqf.Protocol.HTTP)
         self.assertEqual(request.request, '/t/xfg/post')
@@ -24,9 +23,8 @@ class TestRequest(unittest.TestCase):
     def test_request_post_http(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-t', 'post'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual(request.request_method, reqf.RequestMethod.POST)
         self.assertEqual(request.protocol, reqf.Protocol.HTTP)
         self.assertEqual(request.request, '/t/xfg/post')
@@ -37,9 +35,8 @@ class TestRequest(unittest.TestCase):
     def test_custom_request_https(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-t', 'post', '-d', 'data=0123'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual(request.request_method, reqf.RequestMethod.POST)
         self.assertEqual(request.protocol, reqf.Protocol.HTTPS)
         self.assertEqual(request.request, '/request')
@@ -51,25 +48,22 @@ class TestRequest(unittest.TestCase):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['httpqweq'])
         with self.assertRaises(errors.HTTPSClientError):
-            request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                                   args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                                   args.link)
+            request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
 
     def test_wrong_req_type(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['https://abc.de:123/request', '-t', 'qwer'])
         with self.assertRaises(errors.InvalidHTTPMethod):
-            request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                                   args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                                   args.link)
+            request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
 
     def test_wrong_protocol(self):
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['qwerty://abc.de:123/request'])
         with self.assertRaises(errors.InvalidProtocol):
-            request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                                   args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                                   args.link)
+            request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
 
     def test_user_agent(self):
         req = 'GET /t/xfg/post HTTP/1.1\r\n' \
@@ -78,9 +72,8 @@ class TestRequest(unittest.TestCase):
               'User-Agent: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-a', 'qwerty'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -91,9 +84,8 @@ class TestRequest(unittest.TestCase):
               'Referer: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-r', 'qwerty'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -104,9 +96,8 @@ class TestRequest(unittest.TestCase):
               'Cookie: qwerty\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-c', 'qwerty'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
@@ -115,9 +106,8 @@ class TestRequest(unittest.TestCase):
             file.write('qwer=ty')
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', file.name])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual('qwer=ty', request.cookie)
         os.unlink(file.name)
 
@@ -126,9 +116,8 @@ class TestRequest(unittest.TestCase):
             file.write('{"a": "b", "c": "d", "e": "f"}')
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--cookie-file', file.name, '-j'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual('a=b;c=d;e=f;', request.cookie)
         os.unlink(file.name)
 
@@ -137,9 +126,8 @@ class TestRequest(unittest.TestCase):
             file.write('pass=word')
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '--body-file', file.name])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         self.assertEqual('pass=word', request.data_to_send)
         os.unlink(file.name)
 
@@ -149,9 +137,8 @@ class TestRequest(unittest.TestCase):
               'Connection: close\r\n\r\n'
         cmd_parser = http_client.create_cmd_parser()
         args = cmd_parser.parse_args(['http://ptsv2.com/t/xfg/post', '-d', 'qw=12'])
-        request = reqf.Request(args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                               args.link)
+        request = reqf.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         request.do_request()
         self.assertEqual(req, request.request_to_send)
 
