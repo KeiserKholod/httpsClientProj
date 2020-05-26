@@ -59,7 +59,7 @@ class Request:
         except ValueError:
             raise errors.InvalidHTTPMethod()
         self.domain = ""
-        self.port = "80"
+        self.port = 80
         self.request = "/"
         self.data_to_send = body
         if path_to_body is not None:
@@ -120,10 +120,10 @@ class Request:
             raise errors.InvalidProtocol()
 
         if self.protocol == Protocol.HTTPS:
-            self.port = "443"
+            self.port = 443
         port = url.port
         if port is not None:
-            self.port = str(port)
+            self.port = int(port)
         self.domain = url.host
         self.request = url.path_qs
 
@@ -158,7 +158,7 @@ class Request:
     def do_request(self):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((self.domain, int(self.port)))
+            sock.connect((self.domain, self.port))
             request_to_send = self.__prepare_request()
             if self.protocol == Protocol.HTTPS:
                 sock = ssl.wrap_socket(sock,
