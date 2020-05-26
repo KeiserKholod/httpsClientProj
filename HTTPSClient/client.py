@@ -167,6 +167,7 @@ class Request:
     def __prepare_request(self):
         request = []
         if self.request_method == RequestMethod.GET and self.data_to_send != '':
+            self.__remove_args()
             self.request = ''.join((self.request, '?', self.data_to_send))
         request.append('{} {} {}'.format(self.request_method.value, self.request, 'HTTP/1.1'))
         for key in self.headers.keys():
@@ -183,8 +184,13 @@ class Request:
         request = '\r\n'.join(request)
         self.request_to_send = request
         if self.show_request != 0:
-            print(request.encode() + b'')
+            print(request)
         return request
+
+    def __remove_args(self):
+        separator_ind = self.request.find('?')
+        if not separator_ind == -1:
+            self.request = self.request[0:separator_ind]
 
     def do_request(self):
         try:
@@ -207,7 +213,7 @@ class Request:
                     break
             sock.close()
             response = Response(b''.join(all_response))
-        except ValueError:
+        except Exception:
             raise errors.ConnectionError
         else:
             return response
