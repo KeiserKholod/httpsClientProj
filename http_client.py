@@ -29,9 +29,10 @@ def create_cmd_parser():
                         help='to take cookie from json')
     parser.add_argument('-o', '--output-level', default='2', dest="output_level",
                         help='0 - write meta data; '
-                             '1 - write headers; 2 - write body; '
-                         '3 - write all response; '
-                                 '4 - write code of response; '
+                             '1 - write headers; '
+                             '2 - write body; '
+                             '3 - write all response; '
+                             '4 - write code of response; '
                              '5 - write code of response and message;')
     parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
                         help='to add custom headers or change already existing')
