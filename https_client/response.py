@@ -7,10 +7,19 @@ class Response:
         self.response_to_print = b''
         border = resp_bytes.find(b'\r\n\r\n')
         meta_data_border = resp_bytes.find(b'\r\n')
-        self.headers = resp_bytes[meta_data_border + 2:border + 4]
+        self.all_headers = resp_bytes[meta_data_border + 2:border + 4]
+        self.headers = dict()
+        self.__get_headers(resp_bytes, meta_data_border, border)
         self.meta_data = resp_bytes[0:meta_data_border + 2]
         self.body = resp_bytes[border + 4:]
         self.__get_code()
+
+    def __get_headers(self, resp_bytes, meta_data_border, border):
+        headers_raw = resp_bytes[meta_data_border + 2:border].split(b'\r\n')
+        for line in headers_raw:
+            partitions = line.split(b':')
+            self.headers[partitions[0]] = partitions[1][1:]
+
 
     def __get_encoding(self, resp_bytes):
         begin = resp_bytes.find(b'charset=')
@@ -33,12 +42,12 @@ class Response:
         if output_level == 0:
             response.append(self.meta_data)
         if output_level == 1:
-            response.append(self.headers)
+            response.append(self.all_headers)
         if output_level == 2:
             response.append(self.body)
         if output_level == 3:
             response.append(self.meta_data)
-            response.append(self.headers)
+            response.append(self.all_headers)
             response.append(self.body)
         if output_level == 4:
             response.append(str(self.code).encode())

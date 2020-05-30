@@ -160,7 +160,7 @@ class TestResponse(unittest.TestCase):
     def test_init_resp(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         resp = respf.Response(resp_txt)
-        self.assertEqual(TestResponse.headers, resp.headers)
+        self.assertEqual(TestResponse.headers, resp.all_headers)
         self.assertEqual(TestResponse.body, resp.body)
 
     def test_prepare_resp_head(self):
