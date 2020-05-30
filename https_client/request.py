@@ -36,7 +36,8 @@ class Request:
                  is_json=False,
                  req_type='GET',
                  body='',
-                 path_to_body=None):
+                 path_to_body=None,
+                 timeout=0):
         self.headers = dict()
         self.custom_headers = custom_headers
         self.show_request = show_request
@@ -45,6 +46,7 @@ class Request:
         self.referer = referer
         self.cookie = cookie
         self.cookie = ''
+        self.timeout = int(timeout)
         cookie = cookie
         if path_to_cookie is not None:
             self.__get_cookie_from_file(path_to_cookie, is_json)
@@ -160,6 +162,8 @@ class Request:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.domain, self.port))
             request_to_send = self.__prepare_request()
+            if self.timeout > 0:
+                sock.settimeout(self.timeout)
             if self.protocol == Protocol.HTTPS:
                 sock = ssl.wrap_socket(sock,
                                        keyfile=None,

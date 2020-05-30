@@ -10,6 +10,8 @@ def create_cmd_parser():
                         help='example: http://domain.com/path')
     parser.add_argument('-t', '--type', default='GET', dest="req_type",
                         help='Possible: GET, POST, HEAD, OPTIONS, CONNECT, TRACE, DELETE, PUT, TRACE')
+    parser.add_argument('-T', '--timeout', default='0', dest="timeout",
+                        help='to set timeout')
     parser.add_argument('-d', '--body', default='', dest="body",
                         help='body of POST request or args of GET request')
     parser.add_argument('--body-file', default=None, dest="path_to_body",
@@ -46,7 +48,8 @@ if __name__ == '__main__':
     args = cmd_parser.parse_args()
     try:
         request = req.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
-                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
+                              args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
+                              args.timeout)
         response = request.do_request()
         response.prepare_response(args.output_level)
         if not args.resp_is_bin:

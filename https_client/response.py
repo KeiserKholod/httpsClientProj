@@ -20,7 +20,6 @@ class Response:
             partitions = line.split(b':')
             self.headers[partitions[0]] = partitions[1][1:]
 
-
     def __get_encoding(self, resp_bytes):
         begin = resp_bytes.find(b'charset=')
         if not begin == -1:
