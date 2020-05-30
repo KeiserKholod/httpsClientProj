@@ -53,5 +53,5 @@ if __name__ == '__main__':
         else:
             sys.stdout.buffer.write(response.response_to_print)
     except errors.HTTPSClientError as e:
-        print(e.message)
+        print('Error: ' + e.message)
         exit(1)

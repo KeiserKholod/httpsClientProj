@@ -3,16 +3,16 @@ class HTTPSClientError(Exception):
 
 
 class InvalidLink(HTTPSClientError):
-    message = "Error: Invalid link"
+    message = "Invalid link"
 
 
 class InvalidHTTPMethod(HTTPSClientError):
-    message = "Error: Invalid HTTP method"
+    message = "Invalid HTTP method"
 
 
 class InvalidProtocol(HTTPSClientError):
-    message = "Error: Invalid protocol"
+    message = "Invalid protocol"
 
 
 class ConnectionError(HTTPSClientError):
-    message = "Error: Connection error"
+    message = "Connection error"
