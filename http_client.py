@@ -1,5 +1,5 @@
-from HTTPSClient import request as req
-from HTTPSClient import errors
+from https_client import request as req
+from https_client import errors
 import argparse
 import sys
 

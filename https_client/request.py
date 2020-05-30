@@ -1,8 +1,8 @@
 import socket
 import ssl
 import json
-from HTTPSClient import errors
-from HTTPSClient import response as resp
+from https_client import errors
+from https_client import response as resp
 from enum import Enum
 from yarl import URL
 

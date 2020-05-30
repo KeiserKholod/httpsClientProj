@@ -1,8 +1,8 @@
 import unittest
 import http_client
-from HTTPSClient import response as respf
-from HTTPSClient import request as reqf
-from HTTPSClient import errors
+from https_client import response as respf
+from https_client import request as reqf
+from https_client import errors
 import tempfile
 import os
 
