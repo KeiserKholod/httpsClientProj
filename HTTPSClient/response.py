@@ -34,20 +34,22 @@ class Response:
                          is_all=False,
                          is_code=False,
                          is_code_and_message=False):
-        text = b''
+        response = []
         if is_meta:
-            text = self.meta_data
+            response.append(self.meta_data)
         if is_head:
-            text = self.headers
+            response.append(self.headers)
         if is_body or not (is_head or is_all or is_meta):
-            text = b''.join((text, self.body))
+            response.append(self.body)
         if is_all:
-            text = b''.join((self.meta_data, self.headers, self.body))
+            response.append(self.meta_data)
+            response.append(self.headers)
+            response.append(self.body)
         if is_code:
-            text = str(self.code).encode(self.encoding)
+            response.append(str(self.code).encode())
         if is_code_and_message:
-            text = self.code_message
-        self.response_to_print = text
+            response.append(self.code_message)
+        self.response_to_print = b''.join(response)
 
     def __str__(self):
         return self.response_to_print.decode(encoding=self.encoding)
