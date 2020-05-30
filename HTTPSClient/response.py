@@ -27,27 +27,24 @@ class Response:
         self.code = int(self.meta_data.split(b' ')[1])
         self.code_message = self.meta_data.split(b' ')[2][0:-2]
 
-    def prepare_response(self,
-                         is_meta=False,
-                         is_head=False,
-                         is_body=True,
-                         is_all=False,
-                         is_code=False,
-                         is_code_and_message=False):
+    def prepare_response(self, output_level):
+        output_level = int(output_level)
         response = []
-        if is_meta:
+        if output_level == 0:
             response.append(self.meta_data)
-        if is_head:
+        if output_level == 1:
             response.append(self.headers)
-        if is_body or not (is_head or is_all or is_meta):
+        if output_level == 2:
             response.append(self.body)
-        if is_all:
+        if output_level == 3:
             response.append(self.meta_data)
             response.append(self.headers)
             response.append(self.body)
-        if is_code:
+        if output_level == 4:
             response.append(str(self.code).encode())
-        if is_code_and_message:
+        if output_level == 5:
+            response.append(str(self.code).encode())
+            response.append(' ')
             response.append(self.code_message)
         self.response_to_print = b''.join(response)
 

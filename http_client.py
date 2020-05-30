@@ -27,18 +27,12 @@ def create_cmd_parser():
                         help='to show request')
     parser.add_argument('-j', '--json', action='store_true', dest="is_json",
                         help='to take cookie from json')
-    parser.add_argument('-0', action='store_true', dest="is_meta",
-                        help='to write meta data of response')
-    parser.add_argument('-1', action='store_true', dest="is_head",
-                        help='to write head of response')
-    parser.add_argument('-2', action='store_true', dest="is_body",
-                        help='to write body of response')
-    parser.add_argument('-3', '--all', action='store_true', dest="is_all",
-                        help='to write all response')
-    parser.add_argument('-4', '--сode', action='store_true', dest="is_code",
-                        help='to write code of response')
-    parser.add_argument('-5', '--cm', action='store_true', dest="is_code_and_message",
-                        help='to write code and message response')
+    parser.add_argument('-o', '--output-level', default='2', dest="output_level",
+                        help='0 - write meta data; '
+                             '1 - write headers; 2 - write body; '
+                             '3 - write all response; '
+                             '4 - write code of response; '
+                             '5 - write code of response and message;')
     parser.add_argument('-H', '--headers', default=None, nargs='+', dest="custom_headers",
                         help='to add custom headers or change already existing')
     parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
@@ -53,12 +47,11 @@ if __name__ == '__main__':
         request = req.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body)
         response = request.do_request()
-        response.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all, args.is_code,
-                                  args.is_code_and_message)
+        response.prepare_response(args.output_level)
         if not args.resp_is_bin:
             sys.stdout.write(response.__str__())
         else:
             sys.stdout.buffer.write(response.response_to_print)
     except errors.HTTPSClientError as e:
         print(e.message)
-        exit(-1)
+        exit(1)

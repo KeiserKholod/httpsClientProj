@@ -166,25 +166,25 @@ class TestResponse(unittest.TestCase):
     def test_prepare_resp_head(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-1'])
+        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 1'])
         resp = respf.Response(resp_txt)
-        resp.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all)
+        resp.prepare_response(args.output_level)
         self.assertEqual(resp.response_to_print, TestResponse.headers)
 
     def test_prepare_resp_body(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-2'])
+        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 2'])
         resp = respf.Response(resp_txt)
-        resp.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all)
+        resp.prepare_response(args.output_level)
         self.assertEqual(resp.response_to_print, TestResponse.body)
 
     def test_prepare_resp_all(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-3'])
+        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 3'])
         resp = respf.Response(resp_txt)
-        resp.prepare_response(args.is_meta, args.is_head, args.is_body, args.is_all)
+        resp.prepare_response(args.output_level)
         self.assertEqual(resp.response_to_print, resp_txt)
 
 
