@@ -40,6 +40,10 @@ def create_cmd_parser():
                         help='to add custom headers or change already existing')
     parser.add_argument('-b', '--bin', action='store_true', dest="resp_is_bin",
                         help='to write response as binary data')
+    parser.add_argument('-P', '--pass', default=None, dest="password",
+                        help='to set password')
+    parser.add_argument('-U', '--user', default=None, dest="user",
+                        help='to set user')
     return parser
 
 
@@ -49,7 +53,7 @@ if __name__ == '__main__':
     try:
         request = req.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
-                              args.timeout)
+                              args.timeout, args.password, args.user)
         response = request.do_request()
         response.prepare_response(args.output_level)
         if not args.resp_is_bin:

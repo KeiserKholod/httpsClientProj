@@ -1,6 +1,7 @@
 import socket
 import ssl
 import json
+import base64
 from https_client import errors
 from https_client import response as resp
 from enum import Enum
@@ -37,7 +38,9 @@ class Request:
                  req_type='GET',
                  body='',
                  path_to_body=None,
-                 timeout=0):
+                 timeout=0,
+                 password=None,
+                 user=None):
         self.headers = dict()
         self.custom_headers = custom_headers
         self.show_request = show_request
@@ -47,6 +50,8 @@ class Request:
         self.cookie = cookie
         self.cookie = ''
         self.timeout = int(timeout)
+        self.password = password
+        self.user = user
         cookie = cookie
         if path_to_cookie is not None:
             self.__get_cookie_from_file(path_to_cookie, is_json)
@@ -86,6 +91,10 @@ class Request:
             self.headers['Referer'] = self.referer
         if self.cookie is not None:
             self.headers['Cookie'] = self.cookie
+        if self.password is not None and \
+                self.user is not None:
+            self.headers['Authorization'] = base64.b64encode(f'{self.user}:{self.password}'.encode()) \
+                .decode(encoding='utf-8')
         if self.request_method == RequestMethod.POST or \
                 self.request_method == RequestMethod.DELETE or \
                 self.request_method == RequestMethod.PUT or \
@@ -128,6 +137,14 @@ class Request:
             self.port = int(port)
         self.domain = url.host
         self.path = url.path_qs
+        user = url.user
+        if user is not None and \
+                self.user is None:
+            self.user = user
+        password = url.password
+        if password is not None and \
+                self.password is None:
+            self.password = password
 
     def __prepare_request(self):
         request = []
