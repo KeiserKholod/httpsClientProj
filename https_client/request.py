@@ -197,7 +197,7 @@ class Request:
                     break
             sock.close()
             response = resp.Response(b''.join(all_response))
-        except ValueError:
+        except Exception:
             raise errors.ConnectionError
         else:
             return response
