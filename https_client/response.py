@@ -23,9 +23,9 @@ class Response:
         code = int(code)
         headers = {}
         while True:
-            line = lines.pop(0).strip()
             if not lines:
                 break
+            line = lines.pop(0).strip()
             header, value = line.split(': ', 1)
             headers[header] = value
         encoding = Response.__get_encoding(headers)
