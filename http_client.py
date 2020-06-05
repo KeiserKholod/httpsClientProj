@@ -93,10 +93,6 @@ if __name__ == '__main__':
             sys.stdout.buffer.write(b'\r\n'.join(response_to_print))
         else:
             sys.stdout.write('\r\n'.join(response_to_print))
-        # if not args.resp_is_bin:
-        #     sys.stdout.write(response.__str__())
-        # else:
-        #     sys.stdout.buffer.write(response.response_to_print)
     except errors.HTTPSClientError as e:
         print('Error: ' + e.message)
         exit(1)

@@ -1,6 +1,3 @@
-import io
-
-
 class Response:
     def __init__(self,
                  proto=None,
