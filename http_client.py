@@ -54,6 +54,37 @@ def get_headers(headers):
     return '\r\n'.join(lines)
 
 
+def print_response(args, response_data):
+    response_to_print = []
+    if int(args.output_level) == 0:
+        parts = [response.proto, str(response.code), response.message]
+        response_to_print.append(' '.join(parts))
+    if int(args.output_level) == 1:
+        response_to_print.append(get_headers(response.headers))
+    if int(args.output_level) == 2:
+        if not args.resp_is_bin:
+            response_to_print.append(response.body.decode(encoding=response.encoding))
+        else:
+            response_to_print.append(response.body)
+    if int(args.output_level) == 3:
+        parts = [response.proto, str(response.code), response.message]
+        response_to_print.append(' '.join(parts))
+        response_to_print.append(get_headers(response.headers))
+        response_to_print.append('')
+        if not args.resp_is_bin:
+            response_to_print.append(response.body.decode(encoding=response.encoding))
+        else:
+            response_to_print.append(response.body)
+
+    if args.resp_is_bin:
+        for i in range(len(response_to_print)):
+            if isinstance(response_to_print[i], str):
+                response_to_print[i] = response_to_print[i].encode('utf-8')
+        sys.stdout.buffer.write(b'\r\n'.join(response_to_print))
+    else:
+        sys.stdout.write('\r\n'.join(response_to_print))
+
+
 if __name__ == '__main__':
     cmd_parser = create_cmd_parser()
     args = cmd_parser.parse_args()
@@ -65,34 +96,7 @@ if __name__ == '__main__':
         response = Response.parse_from_bytes(response_data)
         if args.show_request:
             print(request.request_to_send)
-        response_to_print = []
-        if int(args.output_level) == 0:
-            parts = [response.proto, str(response.code), response.message]
-            response_to_print.append(' '.join(parts))
-        if int(args.output_level) == 1:
-            response_to_print.append(get_headers(response.headers))
-        if int(args.output_level) == 2:
-            if not args.resp_is_bin:
-                response_to_print.append(response.body.decode(encoding=response.encoding))
-            else:
-                response_to_print.append(response.body)
-        if int(args.output_level) == 3:
-            parts = [response.proto, str(response.code), response.message]
-            response_to_print.append(' '.join(parts))
-            response_to_print.append(get_headers(response.headers))
-            response_to_print.append('')
-            if not args.resp_is_bin:
-                response_to_print.append(response.body.decode(encoding=response.encoding))
-            else:
-                response_to_print.append(response.body)
-
-        if args.resp_is_bin:
-            for i in range(len(response_to_print)):
-                if isinstance(response_to_print[i], str):
-                    response_to_print[i] = response_to_print[i].encode('utf-8')
-            sys.stdout.buffer.write(b'\r\n'.join(response_to_print))
-        else:
-            sys.stdout.write('\r\n'.join(response_to_print))
+        print_response(args, response)
     except errors.HTTPSClientError as e:
         print('Error: ' + e.message)
         exit(1)
