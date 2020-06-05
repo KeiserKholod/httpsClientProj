@@ -29,7 +29,6 @@ class Request:
     def __init__(self,
                  link,
                  custom_headers=None,
-                 show_request=False,
                  agent=None,
                  referer=None,
                  cookie=None,
@@ -43,16 +42,13 @@ class Request:
                  user=None):
         self.headers = dict()
         self.custom_headers = custom_headers
-        self.show_request = show_request
         self.request_to_send = b''
         self.user_agent = agent
         self.referer = referer
         self.cookie = cookie
-        self.cookie = ''
         self.timeout = int(timeout)
         self.password = password
         self.user = user
-        cookie = cookie
         if path_to_cookie is not None:
             self.__get_cookie_from_file(path_to_cookie, is_json)
         else:
@@ -165,8 +161,6 @@ class Request:
             request.append(self.data_to_send)
         request = '\r\n'.join(request)
         self.request_to_send = request
-        if self.show_request != 0:
-            print(request)
         return request
 
     def __remove_args(self):

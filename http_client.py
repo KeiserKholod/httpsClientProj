@@ -51,11 +51,13 @@ if __name__ == '__main__':
     cmd_parser = create_cmd_parser()
     args = cmd_parser.parse_args()
     try:
-        request = req.Request(args.link, args.custom_headers, args.show_request, args.agent, args.referer, args.cookie,
+        request = req.Request(args.link, args.custom_headers, args.agent, args.referer, args.cookie,
                               args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
                               args.timeout, args.password, args.user)
         response = request.do_request()
         response.prepare_response(args.output_level)
+        if args.show_request:
+            print(request.request_to_send)
         if not args.resp_is_bin:
             sys.stdout.write(response.__str__())
         else:
