@@ -13,6 +13,14 @@ class Response:
         self.body = body
         self.encoding = encoding
 
+    @property
+    def meta_data(self):
+        return f'{self.proto} {self.code} {self.message}'
+
+    @property
+    def raw_headers(self):
+        return '\r\n'.join(f'{header}: {value}' for header, value in self.headers.items())
+
     @staticmethod
     def parse_from_bytes(response_data):
         meta_and_headers, body = response_data.split(b'\r\n\r\n', 2)

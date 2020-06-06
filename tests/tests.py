@@ -160,11 +160,9 @@ class TestResponse(unittest.TestCase):
     def test_resp(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
         resp = respf.Response.parse_from_bytes(resp_txt)
-        resp_headers = b''
-        for header in resp.headers:
-            resp_headers += f'{header}: {resp.headers[header]}\r\n'.encode(encoding='utf-8')
-        resp_headers += b'\r\n'
-        resp_meta = ' '.join((resp.proto, str(resp.code), resp.message)).encode(encoding='utf-8')
+        resp_headers = resp.raw_headers.encode(encoding='utf-8')
+        resp_headers += b'\r\n\r\n'
+        resp_meta = resp.meta_data.encode(encoding='utf-8')
         resp_meta += b'\r\n'
         self.assertEqual(TestResponse.headers, resp_headers)
         self.assertEqual(TestResponse.body, resp.body)

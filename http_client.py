@@ -46,30 +46,21 @@ def create_cmd_parser():
     return parser
 
 
-def get_headers(headers):
-    lines = []
-    for header in headers:
-        line = [header, headers[header]]
-        lines.append(': '.join(line))
-    return '\r\n'.join(lines)
-
-
 def print_response(args, response_data):
     response_to_print = []
     if int(args.output_level) == 0:
-        parts = [response.proto, str(response.code), response.message]
-        response_to_print.append(' '.join(parts))
+        response_to_print.append(response.meta_data)
     if int(args.output_level) == 1:
-        response_to_print.append(get_headers(response.headers))
+        response_to_print.append(response.raw_headers)
     if int(args.output_level) == 2:
         if not args.resp_is_bin:
             response_to_print.append(response.body.decode(encoding=response.encoding))
         else:
             response_to_print.append(response.body)
     if int(args.output_level) == 3:
-        parts = [response.proto, str(response.code), response.message]
-        response_to_print.append(' '.join(parts))
-        response_to_print.append(get_headers(response.headers))
+        response_to_print.append(response.meta_data)
+        response_to_print.append(response.raw_headers)
+        response_to_print.append('')
         response_to_print.append('')
         if not args.resp_is_bin:
             response_to_print.append(response.body.decode(encoding=response.encoding))
