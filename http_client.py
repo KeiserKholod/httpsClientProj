@@ -83,8 +83,7 @@ if __name__ == '__main__':
         request = Request(args.link, args.custom_headers, args.agent, args.referer, args.cookie,
                           args.path_to_cookie, args.is_json, args.req_type, args.body, args.path_to_body,
                           args.timeout, args.password, args.user)
-        response_data = request.do_request()
-        response = Response.parse_from_bytes(response_data)
+        response = Response.parse_from_bytes(request.do_request())
         if args.show_request:
             print(request.request_to_send)
         print_response(args, response)
