@@ -1,3 +1,7 @@
+import re
+from https_client import errors
+
+
 class Response:
     def __init__(self,
                  proto=None,
@@ -27,7 +31,11 @@ class Response:
         meta_and_headers = meta_and_headers.decode(encoding='utf-8')
         lines = meta_and_headers.splitlines()
         meta = lines.pop(0)
-        proto, code, message = meta.split(' ', 3)
+        check_meta = re.compile(r"(?P<proto>HTTP/\d\.\d) (?P<code>\d{3}) (?P<message>[\w]*)")
+        checked_meta = check_meta.match(meta)
+        if checked_meta is None:
+            raise errors.InvalidResponse
+        proto, code, message = checked_meta.groups()[0], checked_meta.groups()[1], checked_meta.groups()[2]
         code = int(code)
         headers = {}
         while True:
