@@ -16,3 +16,7 @@ class InvalidProtocol(HTTPSClientError):
 
 class ConnectionError(HTTPSClientError):
     message = "Connection error"
+
+
+class InvalidResponse(HTTPSClientError):
+    message = "Invalid response"

@@ -157,35 +157,16 @@ class TestResponse(unittest.TestCase):
               b'Connection: close\r\n\r\n'
     body = b'Thank you for this dump. I hope you have a lovely day!'
 
-    def test_init_resp(self):
+    def test_resp(self):
         resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
-        resp = respf.Response(resp_txt)
-        self.assertEqual(TestResponse.headers, resp.all_headers)
+        resp = respf.Response.parse_from_bytes(resp_txt)
+        resp_headers = resp.raw_headers.encode(encoding='utf-8')
+        resp_headers += b'\r\n\r\n'
+        resp_meta = resp.meta_data.encode(encoding='utf-8')
+        resp_meta += b'\r\n'
+        self.assertEqual(TestResponse.headers, resp_headers)
         self.assertEqual(TestResponse.body, resp.body)
-
-    def test_prepare_resp_head(self):
-        resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
-        cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 1'])
-        resp = respf.Response(resp_txt)
-        resp.prepare_response(args.output_level)
-        self.assertEqual(resp.response_to_print, TestResponse.headers)
-
-    def test_prepare_resp_body(self):
-        resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
-        cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 2'])
-        resp = respf.Response(resp_txt)
-        resp.prepare_response(args.output_level)
-        self.assertEqual(resp.response_to_print, TestResponse.body)
-
-    def test_prepare_resp_all(self):
-        resp_txt = TestResponse.meta + TestResponse.headers + TestResponse.body
-        cmd_parser = http_client.create_cmd_parser()
-        args = cmd_parser.parse_args(['https://abc.de:123/request', '-o 3'])
-        resp = respf.Response(resp_txt)
-        resp.prepare_response(args.output_level)
-        self.assertEqual(resp.response_to_print, resp_txt)
+        self.assertEqual(TestResponse.meta, resp_meta)
 
 
 if __name__ == '__main__':
