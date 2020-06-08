@@ -89,7 +89,8 @@ class Request:
             self.headers['Cookie'] = self.cookie
         if self.password is not None and \
                 self.user is not None:
-            self.headers['Authorization'] = base64.b64encode(f'{self.user}:{self.password}'.encode()) \
+            self.headers['Authorization'] = base64.b64encode(
+                f'{self.user}:{self.password}'.encode()) \
                 .decode(encoding='utf-8')
         if self.request_method == RequestMethod.POST or \
                 self.request_method == RequestMethod.DELETE or \
@@ -144,10 +145,12 @@ class Request:
 
     def __prepare_request(self):
         request = []
-        if self.request_method == RequestMethod.GET and self.data_to_send != '':
+        if self.request_method == RequestMethod.GET and\
+                self.data_to_send != '':
             self.__remove_args()
             self.path = ''.join((self.path, '?', self.data_to_send))
-        request.append('{} {} {}'.format(self.request_method.value, self.path, 'HTTP/1.1'))
+        request.append('{} {} {}'.format(
+            self.request_method.value, self.path, 'HTTP/1.1'))
         for key in self.headers.keys():
             request.append('{}: {}'.format(key, self.headers[key]))
         request.append('')
