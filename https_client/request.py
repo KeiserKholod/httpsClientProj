@@ -193,8 +193,7 @@ class Request:
                 if not response_bytes:
                     break
             sock.close()
-            response = resp.Response(b''.join(all_response))
         except Exception:
             raise errors.ConnectionError
         else:
-            return response
+            return b''.join(all_response)
