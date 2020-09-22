@@ -46,7 +46,7 @@ class Request:
         self.user_agent = agent
         self.referer = referer
         self.cookie = cookie
-        self.timeout = int(timeout)
+        self.timeout = float(timeout)
         self.password = password
         self.user = user
         if path_to_cookie is not None:
