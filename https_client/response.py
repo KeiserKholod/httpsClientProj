@@ -27,7 +27,8 @@ class Response:
 
     @staticmethod
     def parse_from_bytes(response_data):
-        meta_and_headers, body = response_data.split(b'\r\n\r\n', 2)
+        meta_and_headers, *body = response_data.split(b'\r\n\r\n', 2)
+        body = b''.join(body)
         meta_and_headers = meta_and_headers.decode(encoding='utf-8')
         lines = meta_and_headers.splitlines()
         meta = lines.pop(0)
